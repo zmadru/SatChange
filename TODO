@@ -1,0 +1,18 @@
+modis 250 NDVI 8 dias
+shape
+
+
+Filtros:
+    *SG
+    tamaño de ventana (impar)
+    orden del polinomio
+
+Indices:
+    *NDVI:
+        -Modis = b2 y b1
+        -Sentinel 2 10m = b8 y b4
+        -Sentinel 2 20m = b8a y b4
+        -Sentinel 2 60m = b8a y b4
+        -AVHRR = b2 y b1
+
+    
