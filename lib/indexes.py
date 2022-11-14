@@ -7,6 +7,10 @@ import gc
 import numpy as np
 from osgeo import gdal
 
+#  Global variables
+progress = 0
+start = False
+
 def calculateIndex(index:str, files:list, out_dir:str, sensor:str):
     """
     Calculates the index of the given images depending on the sensor.
@@ -70,5 +74,7 @@ def ndvi(files:list, out_dir:str, sensor:str):
         ndviFile.FlushCache()  # Flush the cache
         del ndviFile, ndvi  # Free the variables
         gc.collect()    # Clean the memory
+        progress += 1   # Increase the progress
+
         
     

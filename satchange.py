@@ -549,7 +549,7 @@ class indexesWindow(tk.Frame):
         self.master = master
         self.config(bg="white")
         self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 5)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
         self.create_widgets()
         if not solo:
@@ -625,8 +625,29 @@ class indexesWindow(tk.Frame):
         """
         Calculate the indexes selected
         """
+        if not self.solo:
+            global dir_out
+
         if len(self.file) >= 1:
-            indexes.calculateIndex(self.modeSelect.get(), self.file, self.dir, self.sensor.get())
+            # start a thead to calculate the indexes and show the progress
+            self.thread = Thread(target=indexes.calculateIndex,args=(self.modeSelect.get(), self.file, self.dir, self.sensor.get()))
+            self.thread.start()
+            while indexes.start == False:
+                self.master.update()
+            self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+            self.progress.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+            
+            while self.progress["value"] < 100:
+                self.progress["value"] = indexes.progress
+                self.master.update()
+            
+            if self.thread.is_alive():
+                self.thread.join()
+            
+            if self.solo:
+                showinfo("Indexes", f"Indexes calculated and saved in {self.dir}")
+            else:
+                dir_out = self.dir
         else:
             showerror("Error", "No input file selected")
 
