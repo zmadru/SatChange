@@ -114,7 +114,8 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
         for j in range(width):
                 aux[i, j, :] = fill(img[i, j, :], 0, modeInterp)
                 progress = (i * width + j) / (height * width) * 100
-  
+    
+    progress = 100
     # Save
     dst = f'{name}_filt_{modeInterp}_{ext}'
     out_file = dst
