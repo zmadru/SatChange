@@ -32,7 +32,7 @@ class App(tk.Tk):
         self.iconphoto(True, tk.PhotoImage(file="img/satelliteicon.png"))
         self.config(bg="white")
         self.resizable(0, 0)
-        self.geometry("500x350")
+        self.geometry("670x350")
         self.create_widgets()
         self.indwin = indexWindow(self)
         self.indwin.grid(row=0, column=0, sticky="nsew")
@@ -156,6 +156,10 @@ class indexWindow(tk.Frame):
         """
         self.label1 = tk.Label(self, text="Satchange", font=("Arial", 25), bg="white")
         self.label1.grid(row=0, column=0, pady=10, padx=10)
+        img = tk.PhotoImage(file="img/convenio.png")
+        self.labelimg = tk.Label(self, image=img)
+        self.labelimg.image = img
+        self.labelimg.grid(row=0, column=1, columnspan=3, rowspan=1)
         self.separator1 = ttk.Separator(self, orient=HORIZONTAL)
         self.separator1.grid(row=1, column=0, columnspan=4, sticky="ew", pady=10, padx=10)
         self.label2 = tk.Label(self, text="New single process", font=("Arial", 15), bg="white")
@@ -488,7 +492,7 @@ class filterWindow(tk.Frame):
         Create the label of the window
         """
         self.label = tk.Label(self, text="Filter", bg="white", font=("Arial", 25))
-        self.label.grid(row=0, column=1, columnspan=2, sticky="w")
+        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
         self.fileLabel = ttk.Label(self, width=45, font=("Arial", 10))
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
 
@@ -570,7 +574,7 @@ class indexesWindow(tk.Frame):
         Create the label of the window
         """
         self.label = tk.Label(self, text="Indexes", bg="white", font=("Arial", 25))
-        self.label.grid(row=0, column=1, columnspan=2, sticky="w")
+        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
         self.fileLabel = ttk.Label(self, width=45, font=("Arial", 10))
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
         self.dirLabel = ttk.Label(self, width=45, font=("Arial", 10))
