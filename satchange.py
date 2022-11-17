@@ -32,7 +32,7 @@ class App(tk.Tk):
         self.iconphoto(True, tk.PhotoImage(file="img/satelliteicon.png"))
         self.config(bg="white")
         self.resizable(0, 0)
-        self.geometry("670x350")
+        self.geometry("700x350")
         self.create_widgets()
         self.indwin = indexWindow(self)
         self.indwin.grid(row=0, column=0, sticky="nsew")
@@ -154,7 +154,10 @@ class indexWindow(tk.Frame):
         """
         Create the labels of the index window
         """
-        self.label1 = tk.Label(self, text="Satchange", font=("Arial", 25), bg="white")
+        logo = tk.PhotoImage(file="img/Logo2.png")
+        logo = logo.subsample(6)
+        self.label1 = tk.Label(self, image=logo, bg="white")
+        self.label1.image = logo
         self.label1.grid(row=0, column=0, pady=10, padx=10)
         img = tk.PhotoImage(file="img/convenio.png")
         self.labelimg = tk.Label(self, image=img)
