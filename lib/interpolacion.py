@@ -76,9 +76,9 @@ def fill(A, value, method):
      """        
     inds = np.arange(A.shape[0])
     good = np.where(A != value)
-    f = interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")
-    A = np.where(A != value, A, f(inds))
-           
+    if len(good[0]) >=2 and len(inds) >= 2:
+        f = interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")
+        A = np.where(A != value, A, f(inds))           
     return A
 
 
