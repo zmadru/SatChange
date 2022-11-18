@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import ttk, filedialog
 from tkinter import *
@@ -430,7 +431,7 @@ class interpolationWindow(tk.Frame):
 
             while self.pb['value'] < 100:
                 self.pb['value'] = interpolacion.progress
-                self.percentajeLabel['text'] = str(interpolacion.progress)+"%"
+                self.percentajeLabel['text'] = str(interpolacion.progress).split(".")[0]+"%"
                 self.pb.update()
                 self.update()
 
@@ -439,19 +440,10 @@ class interpolationWindow(tk.Frame):
             self.pb.stop()
             self.startBtn.grid(row=3, column=1, sticky="w")
 
-            while(thd.is_alive()):
-                if i == 0:
-                    self.percentajeLabel['text'] = "Saving file"
-                    i += 1
-                elif i == 1:
-                    self.percentajeLabel['text'] = "Saving file."
-                    i += 1
-                elif i == 2:
-                    self.percentajeLabel['text'] = "Saving file.."
-                    i += 1
-                elif i == 3:
-                    self.percentajeLabel['text'] = "Saving file..."
-                    i = 0
+            if(thd.is_alive()):
+                info = showinfo("Satchange", "Saving the file, please wait. Dont close the window")
+                thd.join()
+            info.destroy()               
             
             if self.solo:
                 showinfo("Satchange", "The process has finished, "+interpolacion.out_file+" has been created")
