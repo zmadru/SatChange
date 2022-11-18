@@ -439,8 +439,19 @@ class interpolationWindow(tk.Frame):
             self.pb.stop()
             self.startBtn.grid(row=3, column=1, sticky="w")
 
-            if(thd.is_alive()):
-                thd.join()
+            while(thd.is_alive()):
+                if i == 0:
+                    self.percentajeLabel['text'] = "Saving file"
+                    i += 1
+                elif i == 1:
+                    self.percentajeLabel['text'] = "Saving file."
+                    i += 1
+                elif i == 2:
+                    self.percentajeLabel['text'] = "Saving file.."
+                    i += 1
+                elif i == 3:
+                    self.percentajeLabel['text'] = "Saving file..."
+                    i = 0
             
             if self.solo:
                 showinfo("Satchange", "The process has finished, "+interpolacion.out_file+" has been created")
