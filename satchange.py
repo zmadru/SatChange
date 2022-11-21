@@ -427,7 +427,6 @@ class interpolationWindow(tk.Frame):
             self.startBtn.grid_forget()
             self.pb.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="w")
             self.percentajeLabel.grid(row=2, column=0, padx=15, pady=5, sticky="e")
-            self.pb.start()
 
             while self.pb['value'] < 100:
                 self.pb['value'] = interpolacion.progress
@@ -437,7 +436,6 @@ class interpolationWindow(tk.Frame):
 
             self.percentajeLabel['text'] = str(interpolacion.progress)+"%"
             self.pb['value'] = 100
-            self.pb.stop()
             self.startBtn.grid(row=3, column=1, sticky="w")
 
             if(thd.is_alive()):
