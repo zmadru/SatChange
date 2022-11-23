@@ -12,6 +12,7 @@ from osgeo import osr
 # Global variables
 progress:int = 0
 out_file = None
+saving:bool = False
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -48,6 +49,8 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):
         tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
         typ (str, optional): Defaults to 'GTiff'. Driver used to save.
     """
+    global saving
+    saving = True
     xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
     transform = rt.GetGeoTransform()
     geotiff = gdal.GetDriverByName(typ)
@@ -63,6 +66,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):
     output.SetGeoTransform(transform)
     output.SetProjection(srs.ExportToWkt())
     output = None
+    saving = False
 
 def fill(A, value, method):
     '''

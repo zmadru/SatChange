@@ -13,7 +13,6 @@ Has two modes:
 import gc
 import time
 import platform
-from tqdm import tqdm
 import os
 import sys
 import pathlib

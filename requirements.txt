@@ -1,6 +1,6 @@
 scipy
 numpy
-tkinter
+tk
 tqdm
 pandas
 matplotlib

@@ -418,8 +418,8 @@ class interpolationWindow(tk.Frame):
             showerror("Error", "You must select a file")
             return
         else:
-            thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get()))
-            thd.start()
+            self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get()))
+            self.thd.start()
             self.pb = ttk.Progressbar(self, orient=HORIZONTAL, length=300, mode='determinate')
             self.percentajeLabel = ttk.Label(self, justify="right", text="0%",background="white")
             self.modeSelect.grid_forget()
@@ -438,10 +438,13 @@ class interpolationWindow(tk.Frame):
             self.pb['value'] = 100
             self.startBtn.grid(row=3, column=1, sticky="w")
 
-            if(thd.is_alive()):
-                info = showinfo("Satchange", "Saving the file, please wait. Dont close the window")
-                thd.join()
-            info.destroy()               
+            showinfo("Satchange", "Saving the file, please wait. Dont close the window")
+            while(interpolacion.saving):
+                self.update()
+                self.master.update()
+
+            if(self.thd.is_alive()):
+                self.thd.join()               
             
             if self.solo:
                 showinfo("Satchange", "The process has finished, "+interpolacion.out_file+" has been created")
