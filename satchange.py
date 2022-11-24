@@ -61,7 +61,7 @@ class App(tk.Tk):
         self.file_menu.add_command(label="Stack", command=self.viewStack)
         self.file_menu.add_command(label="Interpolation", command=self.interpolation)
         self.file_menu.add_command(label="Filter", command=self.filter)
-        self.file_menu.add_command(label="Autocorrelation")
+        self.file_menu.add_command(label="Autocorrelation", command=self.autocorrelation)
         self.file_menu.add_command(label="Change detection")
 
         # add help entry
@@ -129,6 +129,15 @@ class App(tk.Tk):
         self.indexwin = indexesWindow(self, solo)
         self.indexwin.grid(row=0, column=0, sticky="nsew")
     
+    def autocorrelation(self, solo = True):
+        """
+        Show the autocorrelation window
+        """
+        if solo:
+            self.indwin.grid_forget()
+        self.autowin = acWindow(self, solo)
+        self.autowin.grid(row=0, column=0, sticky="nsew")
+    
 class indexWindow(tk.Frame):
     """
     Index window class
@@ -188,7 +197,7 @@ class indexWindow(tk.Frame):
         self.button3.grid(row=3, column=0)
         self.button4 = ttk.Button(self, text="Interpolation",width=20, command=self.master.interpolation)
         self.button4.grid(row=4, column=0)
-        self.button5 = ttk.Button(self, text="Autocorrelation", width=20)
+        self.button5 = ttk.Button(self, text="Autocorrelation", width=20, command=self.master.autocorrelation)
         self.button5.grid(row=5, column=0)
         self.button6 = ttk.Button(self, text="Change detection", width=20)
         self.button6.grid(row=6, column=0)
@@ -485,6 +494,7 @@ class filterWindow(tk.Frame):
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
         self.solo = solo
         self.create_widgets()
+        self.file = ""
         if not solo:
             self.file = dir_out
             self.selectBtn.config(state="disabled")
@@ -713,8 +723,6 @@ class indexesWindow(tk.Frame):
         else:
             showerror("Error", "No input file selected")
 
-
-
     def run(self):
         """
         Run the filter secuence calling filter
@@ -723,6 +731,94 @@ class indexesWindow(tk.Frame):
             self.indexes()
         else:
             self.indexes()
+            # TODO call the next window
+            self.destroy()
+    
+    def back(self):
+        """
+        Back to the index window
+        """
+        self.destroy()
+        self.master.index()
+
+class acWindow(tk.Frame):
+    """
+    Class that contains the window to calculate the ac
+    """
+    def __init__(self, master, solo):
+        """
+        Constructor
+        """
+        super().__init__(master)
+        self.master = master
+        self.config(bg="white")
+        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        self.solo = solo
+        self.create_widgets()
+        
+    def create_widgets(self):
+        """
+        Create the widgets of the window
+        """
+        self.create_label()
+        self.create_buttons()
+        self.selectMode()
+
+    def create_label(self):
+        """
+        Create the label of the window
+        """
+        self.label = tk.Label(self, text="AC", bg="white", font=("Arial", 25))
+        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
+        self.fileLabel = ttk.Label(self, width=45, font=("Arial", 10))
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.dirLabel = ttk.Label(self, width=45, font=("Arial", 10))
+        self.dirLabel.grid(row=2, column=1, columnspan=2, sticky="w")
+
+    def create_buttons(self):
+        """
+        Create the buttons of the window
+        """
+        self.selectBtn = ttk.Button(self, text="Select file", command=self.select)
+        self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.ourdirBtn = ttk.Button(self, text="Output directory", command=self.selectDir)
+        self.ourdirBtn.grid(row=2, column=0, padx=0, pady=5)
+        self.startBtn = ttk.Button(self, text="Calculate", command=self.run)
+        self.startBtn.grid(row=4, column=1, sticky="w")
+        self.backBtn = ttk.Button(self, text="Back", command=self.back)
+        self.backBtn.grid(row=4, column=2)
+
+    def select(self):
+        """
+        Select the file to calculate the AC
+        """
+        self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        if len(self.file) == 1:
+            self.fileLabel.config(text=self.file[0])
+        else:
+            self.fileLabel.config(text="No input file selected")
+
+    def selectDir(self):
+        """
+        Select the output directory
+        """
+        self.dir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
+        self.dirLabel.config(text=self.dir)
+    
+    def autocorrelation(self):
+        """
+        Calculate the ac
+        """
+    
+    def run(self):
+        """
+        Run the filter secuence calling filter
+        """
+        if self.solo:
+            self.autocorrelation()
+        else:
+            self.autocorrelation()
             # TODO call the next window
             self.destroy()
     
