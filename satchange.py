@@ -137,6 +137,14 @@ class App(tk.Tk):
             self.indwin.grid_forget()
         self.autowin = acWindow(self, solo)
         self.autowin.grid(row=0, column=0, sticky="nsew")
+
+    def newProcess(self):
+        """
+        Show the new process window
+        """
+        self.indwin.grid_forget()
+        self.newwin = newProcessWin(self)
+        self.newwin.grid(row=0, column=0, sticky="nsew")
     
 class indexWindow(tk.Frame):
     """
@@ -187,7 +195,7 @@ class indexWindow(tk.Frame):
         Create the buttons of the index window
         """
         # New complete process
-        self.button1 = ttk.Button(self, text="Start", command=self.start)
+        self.button1 = ttk.Button(self, text="Start", command=self.master.newProcess)
         self.button1.grid(row=3, column=3, pady=10, padx=10)
         self.button2 = ttk.Button(self, text="Exit", command=self.master.destroy)
         self.button2.grid(row=5, column=3, pady=10, padx=10)
@@ -206,12 +214,6 @@ class indexWindow(tk.Frame):
         self.button8 = ttk.Button(self, text="Indexes", command=self.master.indexes)
         self.button8.grid(row=4, column=1, sticky="ew")
     
-    def start(self):
-        """
-        Start the program
-        """
-        self.master.viewStack(False)
-        self.destroy()
   
 class stackWindow(tk.Frame):
     """
@@ -827,6 +829,47 @@ class acWindow(tk.Frame):
         """
         self.destroy()
         self.master.index()
+
+
+class newProcessWin(tk.Frame):
+    """
+    Class that contains the window to start a new entire process
+    """
+
+    def __init__(self, master, solo):
+        """
+        Constructor
+        """
+        super().__init__(master)
+        self.master = master
+        self.config(bg="white")
+        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        self.solo = solo
+        self.create_widgets()
+    
+    def create_widgets(self):
+        """
+        Create the widgets of the window
+        """
+        self.create_label()
+        self.create_buttons()
+
+    def create_label(self):
+        """
+        Create the label of the window
+        """
+        self.label = tk.Label(self, text="New process", bg="white", font=("Arial", 25))
+        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
+
+    def create_buttons(self):
+        """
+        Create the buttons of the window
+        """
+        self.startBtn = ttk.Button(self, text="Start", command=self.run)
+        self.startBtn.grid(row=4, column=1, sticky="w")
+        self.backBtn = ttk.Button(self, text="Back", command=self.back)
+        self.backBtn.grid(row=4, column=2)
 
         
 if __name__ == "__main__":
