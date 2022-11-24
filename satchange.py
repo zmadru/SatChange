@@ -577,8 +577,7 @@ class filterWindow(tk.Frame):
             if self.solo:
                 showinfo("Satchange", "The process has finished, "+filtro_SGV1.out_file+" has been created")
             else:
-                dir_out = filtro_SGV1.out_file    
-
+                dir_out = filtro_SGV1.out_file   
 
 
     def run(self):
