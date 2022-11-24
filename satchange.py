@@ -763,13 +763,12 @@ class acWindow(tk.Frame):
         """
         self.create_label()
         self.create_buttons()
-        self.selectMode()
 
     def create_label(self):
         """
         Create the label of the window
         """
-        self.label = tk.Label(self, text="AC", bg="white", font=("Arial", 25))
+        self.label = tk.Label(self, text="Autocorrelation", bg="white", font=("Arial", 25))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
         self.fileLabel = ttk.Label(self, width=45, font=("Arial", 10))
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
