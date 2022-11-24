@@ -13,6 +13,11 @@ import scipy.stats as st
 from osgeo import gdal
 from osgeo import osr
 
+# Global variables
+progress:int = 0
+out_file = None
+saving:bool = False
+
 # Load and save raster files
 def loadRasterImage(path):
     """ 
@@ -105,6 +110,10 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
         window_size (int): Window size
         polyorder (int): Polynomial order
     """
+    global progress, out_file, saving
+    progress = 0
+    saving = False
+
     name, ext = os.path.splitext(path)
     # Read raster
     rt, img, err, msg = loadRasterImage(path)
@@ -126,9 +135,13 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
             aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
             rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
             pearson[i, j] = r(img[i, j, :], aux[i, j, :], depth)     ##   
-    
+            progress = int((i * width + j) / (height * width) * 100)
+    progress = 100
+
     # Save  
+    saving = True
     dst = f'{name}_SG_{ext}'
+    out_file = dst
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
     dst = f'{name}_SGrmse_{ext}'
@@ -137,6 +150,8 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     dst = f'{name}_SGpearson_{ext}'
     print("Saving in ", dst)
     saveSingleBand(dst, rt, pearson)##
+    saving = False
+    
 
    
 def main():

@@ -542,6 +542,42 @@ class filterWindow(tk.Frame):
         if not self.solo:
             global dir_out
         
+        if self.file == "":
+            showerror("Error", "You must select a file")
+            return
+        else:
+            self.thd = Thread(target=filtro_SGV1.getFiltRaster, args=(self.file, 3, 2))
+            self.thd.start()
+            self.pb = ttk.Progressbar(self, orient=HORIZONTAL, length=300, mode='determinate')
+            self.percentajeLabel = ttk.Label(self, justify="right", text="0%",background="white")
+            self.modeSelect.grid_forget()
+            self.labelSelect.grid_forget()
+            self.startBtn.grid_forget()
+            self.pb.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="w")
+            self.percentajeLabel.grid(row=2, column=0, padx=15, pady=5, sticky="e")
+
+            while self.pb['value'] < 100:
+                self.pb['value'] = filtro_SGV1.progress
+                self.percentajeLabel['text'] = str(filtro_SGV1.progress).split(".")[0]+"%"
+                self.pb.update()
+                self.update()
+            
+            self.percentajeLabel['text'] = str(filtro_SGV1.progress)+"%"
+            self.pb['value'] = 100
+            self.startBtn.grid(row=3, column=1, sticky="w")
+
+            showinfo("Satchange", "Saving the file, please wait. Dont close the window")
+            while(filtro_SGV1.saving):
+                self.update()
+                self.master.update()
+            
+            if(self.thd.is_alive()):
+                self.thd.join()
+            
+            if self.solo:
+                showinfo("Satchange", "The process has finished, "+filtro_SGV1.out_file+" has been created")
+            else:
+                dir_out = filtro_SGV1.out_file    
 
 
 
