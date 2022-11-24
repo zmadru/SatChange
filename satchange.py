@@ -8,6 +8,7 @@ import lib.stackIntFiles as stackInt
 import lib.interpolacion as interpolacion
 import lib.filtro_SGV1 as filtro_SGV1
 import lib.indexes as indexes
+import lib.ACF as ACF
 from threading import Thread
 
 """
@@ -713,7 +714,8 @@ class indexesWindow(tk.Frame):
             
             while self.progress["value"] < 100:
                 self.progress["value"] = indexes.progress
-                self.master.update()
+                self.update()
+                self.pb.update()
             
             if self.thread.is_alive():
                 self.thread.join()
@@ -757,6 +759,7 @@ class acWindow(tk.Frame):
         self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
+        self.file = ""
         self.create_widgets()
         
     def create_widgets(self):
@@ -783,8 +786,8 @@ class acWindow(tk.Frame):
         """
         self.selectBtn = ttk.Button(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
-        self.ourdirBtn = ttk.Button(self, text="Output directory", command=self.selectDir)
-        self.ourdirBtn.grid(row=2, column=0, padx=0, pady=5)
+        # self.ourdirBtn = ttk.Button(self, text="Output directory", command=self.selectDir)
+        # self.ourdirBtn.grid(row=2, column=0, padx=0, pady=5)
         self.startBtn = ttk.Button(self, text="Calculate", command=self.run)
         self.startBtn.grid(row=4, column=1, sticky="w")
         self.backBtn = ttk.Button(self, text="Back", command=self.back)
@@ -795,8 +798,8 @@ class acWindow(tk.Frame):
         Select the file to calculate the AC
         """
         self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
-        if len(self.file) == 1:
-            self.fileLabel.config(text=self.file[0])
+        if self.file != "":
+            self.fileLabel.config(text=self.file)
         else:
             self.fileLabel.config(text="No input file selected")
 
@@ -811,6 +814,37 @@ class acWindow(tk.Frame):
         """
         Calculate the ac
         """
+        if self.file == "":
+            showerror("Error", "No input file selected")
+        else:
+            self.thd = Thread(target=ACF.ACFtif, args=(self.file))
+            self.thd.start()
+            self.pb = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+            self.pb.grid(row=5, column=1, columnspan=3, padx=5, pady=5)
+            self.percentajeLabel = ttk.Label(self, justify="right", text="0%",background="white")
+            self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
+            self.startBtn.config(state="disabled")
+            self.backBtn.config(state="disabled")
+
+            while self.pb["value"] < 100:
+                self.pb["value"] = ACF.progress
+                self.percentajeLabel["text"] = f"{ACF.progress}%"
+                self.update()
+                self.pb.update()
+            
+            self.percentajeLabel["text"] = "100%"
+            self.pb["value"] = 100
+            
+            showinfo("Satchange", "Saving the file, please wait. Dont close the window")
+            while ACF.saving:
+                self.update()
+                self.master.update()
+            
+            self.startBtn.config(state="normal")
+            self.backBtn.config(state="normal")
+            showinfo("Satchange", f"File saved in {ACF.dir_out}")            
+
+
     
     def run(self):
         """

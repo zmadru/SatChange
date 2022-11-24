@@ -10,6 +10,11 @@ import scipy.signal
 import scipy.stats as st
 import statsmodels.tsa.stattools as pc
 
+# Global variables
+progress:int = 0
+out_file = None
+saving:bool = False
+
 # Load and save raster files
 def loadRasterImage(path):
     """ 
@@ -88,6 +93,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
 # Main
 img = None
 def ACFtif(path):
+    global progress, out_file, saving
     name, ext = os.path.splitext(path)
     # Read raster
     rt, img, err, msg = loadRasterImage(path)
@@ -108,14 +114,18 @@ def ACFtif(path):
             #print(pc.acf(img[i, j, :], nlags=nlags, alpha=0.05))
             aux[i, j, :] = pc.acf(img[i, j, :], nlags=nlags, alpha=0.05)[0]
             aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
+            progress = int((i*width+j)/(height*width)*100)
                         
     # Save
+    saving = True
     dst = f'{name}_ACF1_{ext}'
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
+    out_file = dst
     dst = f'{name}_PACF1_{ext}'
     print("Saving in ", dst)
     saveBand(dst, rt, aux2)
+    saving = False
     return aux
 
 if __name__ == "__main__":
