@@ -536,13 +536,25 @@ class filterWindow(tk.Frame):
         self.fileLabel.config(text=self.file)
 
     def filter(self):
-        pass
+        """
+        Run process to filter
+        """
+        if not self.solo:
+            global dir_out
+        
+
 
 
     def run(self):
         """
         Run the filter secuence calling filter
         """
+        if self.solo:
+            self.filter()
+        else:
+            self.filter()
+            # TODO Change to the next window
+            self.destroy()
 
     def back(self):
         """
