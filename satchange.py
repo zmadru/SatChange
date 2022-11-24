@@ -836,7 +836,7 @@ class newProcessWin(tk.Frame):
     Class that contains the window to start a new entire process
     """
 
-    def __init__(self, master, solo):
+    def __init__(self, master):
         """
         Constructor
         """
@@ -845,7 +845,6 @@ class newProcessWin(tk.Frame):
         self.config(bg="white")
         self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
-        self.solo = solo
         self.create_widgets()
     
     def create_widgets(self):
@@ -859,7 +858,7 @@ class newProcessWin(tk.Frame):
         """
         Create the label of the window
         """
-        self.label = tk.Label(self, text="New process", bg="white", font=("Arial", 25))
+        self.label = tk.Label(self, text="New Satchange process", bg="white", font=("Arial", 25))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
     def create_buttons(self):
@@ -870,6 +869,18 @@ class newProcessWin(tk.Frame):
         self.startBtn.grid(row=4, column=1, sticky="w")
         self.backBtn = ttk.Button(self, text="Back", command=self.back)
         self.backBtn.grid(row=4, column=2)
+
+    def run(self):
+        """
+        Run the logic of the entire process
+        """
+
+    def back(self):
+        """
+        Back to the index window
+        """
+        self.destroy()
+        self.master.index()
 
         
 if __name__ == "__main__":
