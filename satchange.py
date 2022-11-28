@@ -309,7 +309,7 @@ class stackWindow(ctk.CTkFrame):
             showerror("Error", "All fields must be filled")
             return
         else:
-            self.pb = ttk.Progressbar(self, orient=HORIZONTAL, mode='determinate', length=300)
+            self.pb = ctk.CTkProgressBar(self, orient=HORIZONTAL, mode='indeterminate', width=300)
             self.pb.grid(row=6, column=1, padx=5, pady=5, columnspan=2, sticky="w")
             # disable the buttons during the process
             self.buttonStart.configure(state="disabled")
@@ -318,18 +318,21 @@ class stackWindow(ctk.CTkFrame):
             self.pbLabel.grid(row=6, column=0, padx=15, pady=5, sticky="e")
             thd = Thread(target=stackInt.stack, args=(self.in_files, self.out_dir, name))
             thd.start()
+            self.pb.start()
 
             while stackInt.start == False:
                 self.master.update()
 
             
-            while self.pb['value'] < 100:
-                self.pb['value'] = stackInt.progress/stackInt.total*100
+            while stackInt.progress/stackInt.total*100 < 100:
+                # self.pb['value'] = stackInt.progress/stackInt.total*100
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.pbLabel.update()
                 self.pb.update()
                 self.update()
-        
+
+            self.pb.grid_forget()
+            self.pbLabel.grid_forget()
             self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
 
             if thd.is_alive():
