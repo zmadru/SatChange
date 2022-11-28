@@ -3,3 +3,4 @@ numpy
 tk
 pandas
 matplotlib
+statsmodels
