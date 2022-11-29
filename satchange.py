@@ -310,7 +310,6 @@ class StackWindow(ctk.CTkFrame):
 
         if len(self.in_files) == 0 or self.out_dir == "" or name == "":
             showerror("Error", "All fields must be filled")
-            return
         else:
             self.pb = ctk.CTkProgressBar(self, orient=HORIZONTAL, mode='indeterminate', width=300)
             self.pb.grid(row=6, column=1, padx=5, pady=5, columnspan=2, sticky="w")
@@ -328,7 +327,6 @@ class StackWindow(ctk.CTkFrame):
 
             
             while stackInt.progress/stackInt.total*100 < 100:
-                # self.pb['value'] = stackInt.progress/stackInt.total*100
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.pbLabel.update()
                 self.pb.update()
@@ -441,7 +439,6 @@ class InterpolationWindow(ctk.CTkFrame):
 
         if self.file == "":
             showerror("Error", "You must select a file")
-            return
         else:
             self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get()))
             self.thd.start()
