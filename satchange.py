@@ -38,7 +38,7 @@ class App(ctk.CTk):
         self.resizable(0, 0)
         self.geometry("685x350")
         self.create_widgets()
-        self.indwin = indexWindow(self)
+        self.indwin = IndexWindow(self)
         self.indwin.grid(row=0, column=0, sticky="nsew")
 
     def create_widgets(self):
@@ -84,7 +84,7 @@ class App(ctk.CTk):
         """
         Show the index window
         """
-        self.indwin = indexWindow(self)
+        self.indwin = IndexWindow(self)
         # center the window
         self.indwin.grid(row=0, column=0, sticky="ns")
 
@@ -96,7 +96,7 @@ class App(ctk.CTk):
             solo (bool, optional): Single ejecution flag. Defaults to True.
         """
         self.indwin.grid_forget()
-        self.stwin = stackWindow(self)
+        self.stwin = StackWindow(self)
         self.stwin.solo = solo
         self.stwin.grid(row=0, column=0, sticky="nsew")
     
@@ -109,7 +109,7 @@ class App(ctk.CTk):
         """
         if solo:
             self.indwin.grid_forget()
-        self.intwin = interpolationWindow(self, solo)
+        self.intwin = InterpolationWindow(self, solo)
         self.intwin.grid(row=0, column=0, sticky="nsew")
 
     def filter(self, solo = True):
@@ -121,7 +121,7 @@ class App(ctk.CTk):
         """
         if solo:
             self.indwin.grid_forget()
-        self.filtwin = filterWindow(self, solo)
+        self.filtwin = FilterWindow(self, solo)
         self.filtwin.grid(row=0, column=0, sticky="nsew")
 
     def indexes(self, solo = True):
@@ -130,7 +130,7 @@ class App(ctk.CTk):
         """
         if solo:
             self.indwin.grid_forget()
-        self.indexwin = indexesWindow(self, solo)
+        self.indexwin = IndexesWindow(self, solo)
         self.indexwin.grid(row=0, column=0, sticky="nsew")
     
     def autocorrelation(self, solo = True):
@@ -139,7 +139,7 @@ class App(ctk.CTk):
         """
         if solo:
             self.indwin.grid_forget()
-        self.autowin = acWindow(self, solo)
+        self.autowin = AcWindow(self, solo)
         self.autowin.grid(row=0, column=0, sticky="nsew")
 
     def newProcess(self):
@@ -147,10 +147,10 @@ class App(ctk.CTk):
         Show the new process window
         """
         self.indwin.grid_forget()
-        self.newwin = newProcessWin(self)
+        self.newwin = NewProcessWin(self)
         self.newwin.grid(row=0, column=0, sticky="nsew")
     
-class indexWindow(ctk.CTkFrame):
+class IndexWindow(ctk.CTkFrame):
     """
     Index window class
     """
@@ -162,8 +162,11 @@ class indexWindow(ctk.CTkFrame):
         super().__init__(master)
         self.master = master
         self.configure(bg=master["bg"])
-        # self.canvas = ctk.CTkCanvas(self, width=500, height=320, highlightthickness=0,)
-        # self.canvas.grid(row=0, column=0, columnspan=4, rowspan=7)
+        label = ctk.CTkLabel(self, text="Satchange", text_font=("Arial", 30))
+        self.canvas = ctk.CTkCanvas(self, width=685, height=350, highlightthickness=0, bg=label["bg"])
+        self.canvas.grid(row=0, column=0, columnspan=4, rowspan=8)
+        self.canvasaux = ctk.CTkCanvas(self, width=685, height=100, highlightthickness=0, bg=master['bg'])
+        self.canvasaux.grid(row=0, column=0, columnspan=4, rowspan=1)
         self.create_widgets()
 
     def create_widgets(self):
@@ -179,7 +182,7 @@ class indexWindow(ctk.CTkFrame):
         """
         logo = tk.PhotoImage(file="img/Logo2.png")
         logo = logo.subsample(6)
-        self.label1 = ctk.CTkLabel(self, image=logo)
+        self.label1 = ctk.CTkLabel(self, image=logo, bg_color=self.master["bg"])
         self.label1.image = logo
         self.label1.grid(row=0, column=0, pady=10, padx=10)
         img = tk.PhotoImage(file="img/convenio.png")
@@ -187,7 +190,7 @@ class indexWindow(ctk.CTkFrame):
         self.labelimg.image = img
         self.labelimg.grid(row=0, column=1, columnspan=3, rowspan=1)
         self.separator1 = ttk.Separator(self, orient=HORIZONTAL)
-        self.separator1.grid(row=1, column=0, columnspan=4, sticky="ew", pady=10, padx=10)
+        # self.separator1.grid(row=1, column=0, columnspan=4, sticky="ew", pady=10, padx=10)
         self.label2 = ctk.CTkLabel(self, text="New single process", text_font=("Arial", 15))
         self.label2.grid(row=2, column=0, pady=10, padx=10, columnspan=2)
         self.separator2 = ttk.Separator(self, orient=VERTICAL)
@@ -206,21 +209,21 @@ class indexWindow(ctk.CTkFrame):
         self.button2.grid(row=5, column=3, pady=10, padx=10)
 
         # Individual process
-        self.button3 = ctk.CTkButton(self, text="Stack",width=20, command=self.master.viewStack)
-        self.button3.grid(row=3, column=0,sticky="ew", pady=10, padx=10)
-        self.button4 = ctk.CTkButton(self, text="Interpolation",width=20, command=self.master.interpolation)
-        self.button4.grid(row=4, column=0, sticky="ew", pady=10, padx=10)
-        self.button5 = ctk.CTkButton(self, text="Autocorrelation", width=20, command=self.master.autocorrelation)
-        self.button5.grid(row=5, column=0, sticky="ew", pady=10, padx=10)
-        self.button6 = ctk.CTkButton(self, text="Change detection", width=20)
-        self.button6.grid(row=6, column=0, sticky="ew", pady=10, padx=10)
+        self.button3 = ctk.CTkButton(self, text="Stack", command=self.master.viewStack)
+        self.button3.grid(row=3, column=0,sticky="ew", padx=10)
+        self.button4 = ctk.CTkButton(self, text="Interpolation", command=self.master.interpolation)
+        self.button4.grid(row=4, column=0, sticky="ew", padx=10)
+        self.button5 = ctk.CTkButton(self, text="Autocorrelation", command=self.master.autocorrelation)
+        self.button5.grid(row=5, column=0, sticky="ew", padx=10)
+        self.button6 = ctk.CTkButton(self, text="Change detection")
+        self.button6.grid(row=5, column=1, sticky="ew", padx=10)
         self.button7 = ctk.CTkButton(self, text="Filter", command=self.master.filter)
-        self.button7.grid(row=3, column=1, sticky="ew")
+        self.button7.grid(row=3, column=1, sticky="ew", padx=10)
         self.button8 = ctk.CTkButton(self, text="Indexes", command=self.master.indexes)
-        self.button8.grid(row=4, column=1, sticky="ew")
+        self.button8.grid(row=4, column=1, sticky="ew", padx=10)
     
   
-class stackWindow(ctk.CTkFrame):
+class StackWindow(ctk.CTkFrame):
     """
     The stack window
     """
@@ -363,7 +366,7 @@ class stackWindow(ctk.CTkFrame):
             self.master.interpolation(False)
             self.destroy()            
 
-class interpolationWindow(ctk.CTkFrame):
+class InterpolationWindow(ctk.CTkFrame):
     """
     Interpolation window
     """
@@ -491,7 +494,7 @@ class interpolationWindow(ctk.CTkFrame):
         self.destroy()
         self.master.index()
 
-class filterWindow(ctk.CTkFrame):
+class FilterWindow(ctk.CTkFrame):
     """
     Filter window
     """
@@ -502,9 +505,9 @@ class filterWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        # self.config(bg="white")
-        # self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
-        # self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
+        label = ctk.CTkLabel(self, text="Filter", text_font=("Arial", 25))
+        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
         self.solo = solo
         self.create_widgets()
         self.file = ""
@@ -527,7 +530,7 @@ class filterWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Filter", text_font=("Arial", 25))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
-        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10))
+        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10), text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
 
     def create_buttons(self):
@@ -567,7 +570,6 @@ class filterWindow(ctk.CTkFrame):
         
         if self.file == "":
             showerror("Error", "You must select a file")
-            return
         else:
             self.thd = Thread(target=filtro_SGV1.getFiltRaster, args=(self.file, 3, 2))
             self.thd.start()
@@ -621,7 +623,7 @@ class filterWindow(ctk.CTkFrame):
         self.destroy()
         self.master.index()
 
-class indexesWindow(ctk.CTkFrame):
+class IndexesWindow(ctk.CTkFrame):
     """
     Indexes window
     """
@@ -632,9 +634,9 @@ class indexesWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        # self.config(bg="white")
-        # self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
-        # self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        label = ctk.CTkLabel(self, text="Indexes", text_font=("Arial", 25))
+        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
         self.create_widgets()
         if not solo:
@@ -656,9 +658,9 @@ class indexesWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Indexes", text_font=("Arial", 25))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
-        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10))
+        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10), text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
-        self.dirLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10))
+        self.dirLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10), text="No directory selected")
         self.dirLabel.grid(row=2, column=1, columnspan=2, sticky="w")
 
     def create_buttons(self):
@@ -755,7 +757,7 @@ class indexesWindow(ctk.CTkFrame):
         self.destroy()
         self.master.index()
 
-class acWindow(ctk.CTkFrame):
+class AcWindow(ctk.CTkFrame):
     """
     Class that contains the window to calculate the ac
     """
@@ -765,9 +767,9 @@ class acWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        # self.config(bg="white")
-        # self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
-        # self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        label = ctk.CTkLabel(self, text="AC", text_font=("Arial", 25))
+        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
         self.file = ""
         self.create_widgets()
@@ -784,11 +786,9 @@ class acWindow(ctk.CTkFrame):
         Create the label of the window
         """
         self.label = ctk.CTkLabel(self, text="Autocorrelation", bg="white", text_font=("Arial", 25))
-        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
-        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10))
+        self.label.grid(row=0, column=0, columnspan=2, sticky="w", padx=10, pady=10)
+        self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10), text="No input file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
-        self.dirLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10))
-        self.dirLabel.grid(row=2, column=1, columnspan=2, sticky="w")
 
     def create_buttons(self):
         """
@@ -796,12 +796,10 @@ class acWindow(ctk.CTkFrame):
         """
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
-        # self.ourdirBtn = ctk.CTkButton(self, text="Output directory", command=self.selectDir)
-        # self.ourdirBtn.grid(row=2, column=0, padx=0, pady=5)
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.run)
-        self.startBtn.grid(row=4, column=1, sticky="w")
+        self.startBtn.grid(row=3, column=1, sticky="w")
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
-        self.backBtn.grid(row=4, column=2)
+        self.backBtn.grid(row=3, column=2)
 
     def select(self):
         """
@@ -875,7 +873,7 @@ class acWindow(ctk.CTkFrame):
         self.master.index()
 
 
-class newProcessWin(ctk.CTkFrame):
+class NewProcessWin(ctk.CTkFrame):
     """
     Class that contains the window to start a new entire process
     """
@@ -886,9 +884,9 @@ class newProcessWin(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.config(bg="white")
-        # self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
-        # self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        label = ctk.CTkLabel(self, text="New process", text_font=("Arial", 25))
+        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.create_widgets()
     
     def create_widgets(self):
