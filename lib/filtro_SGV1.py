@@ -41,7 +41,7 @@ def loadRasterImage(path):
     else:
         return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
     
-def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
+def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
     """
     Save a raster image from memory to disk
 
@@ -65,7 +65,7 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     output = None
     
     
-def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
+def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):##
     """
     Save a raster image from memory to disk
 
@@ -149,7 +149,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     saveSingleBand(dst, rt, rmse)##
     dst = f'{name}_SGpearson_{ext}'
     print("Saving in ", dst)
-    saveSingleBand(dst, rt, pearson)##
+    saveSingleBand(dst, rt, pearson, tt=gdal.GDT_Float32)##
     saving = False
     
 

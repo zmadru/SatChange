@@ -34,7 +34,7 @@ class App(tk.Tk):
         self.iconphoto(True, tk.PhotoImage(file="img/satelliteicon.png"))
         self.config(bg="white")
         self.resizable(0, 0)
-        self.geometry("700x350")
+        self.geometry("685x350")
         self.create_widgets()
         self.indwin = indexWindow(self)
         self.indwin.grid(row=0, column=0, sticky="nsew")
@@ -158,7 +158,7 @@ class indexWindow(tk.Frame):
         """
         super().__init__(master, bg="white")
         self.master = master
-        self.canvas = tk.Canvas(self, width=500, height=320, bg="white", highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white", highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=4, rowspan=7)
         self.create_widgets()
 
@@ -202,18 +202,18 @@ class indexWindow(tk.Frame):
         self.button2.grid(row=5, column=3, pady=10, padx=10)
 
         # Individual process
-        self.button3 = ttk.Button(self, text="Stack",width=20, command=self.master.viewStack)
-        self.button3.grid(row=3, column=0)
-        self.button4 = ttk.Button(self, text="Interpolation",width=20, command=self.master.interpolation)
-        self.button4.grid(row=4, column=0)
-        self.button5 = ttk.Button(self, text="Autocorrelation", width=20, command=self.master.autocorrelation)
-        self.button5.grid(row=5, column=0)
-        self.button6 = ttk.Button(self, text="Change detection", width=20)
-        self.button6.grid(row=6, column=0)
+        self.button3 = ttk.Button(self, text="Stack", command=self.master.viewStack)
+        self.button3.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
+        self.button4 = ttk.Button(self, text="Interpolation", command=self.master.interpolation)
+        self.button4.grid(row=4, column=0, pady=10, padx=10, sticky="ew")
+        self.button5 = ttk.Button(self, text="Autocorrelation", command=self.master.autocorrelation)
+        self.button5.grid(row=5, column=0, pady=10, padx=10, sticky="ew")
+        self.button6 = ttk.Button(self, text="Change detection")
+        self.button6.grid(row=5, column=1, pady=10, padx=10, sticky="ew")
         self.button7 = ttk.Button(self, text="Filter", command=self.master.filter)
-        self.button7.grid(row=3, column=1, sticky="ew")
+        self.button7.grid(row=3, column=1, pady=10, padx=10, sticky="ew")
         self.button8 = ttk.Button(self, text="Indexes", command=self.master.indexes)
-        self.button8.grid(row=4, column=1, sticky="ew")
+        self.button8.grid(row=4, column=1, pady=10, padx=10, sticky="ew")
     
   
 class stackWindow(tk.Frame):
@@ -227,7 +227,7 @@ class stackWindow(tk.Frame):
         Constructor
         """
         super().__init__(master, bg="white")
-        self.canvas = tk.Canvas(self, width=500, height=300, bg="white", highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white", highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=7)
         self.create_widgets()
         self.solo = True
@@ -365,7 +365,7 @@ class interpolationWindow(tk.Frame):
         super().__init__(master)
         self.master = master
         self.config(bg="white")
-        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
         self.solo = solo
         self.create_widgets()
@@ -493,7 +493,7 @@ class filterWindow(tk.Frame):
         super().__init__(master)
         self.master = master
         self.config(bg="white")
-        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
         self.solo = solo
         self.create_widgets()
@@ -623,7 +623,7 @@ class indexesWindow(tk.Frame):
         super().__init__(master)
         self.master = master
         self.config(bg="white")
-        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
         self.create_widgets()
@@ -756,7 +756,7 @@ class acWindow(tk.Frame):
         super().__init__(master)
         self.master = master
         self.config(bg="white")
-        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.solo = solo
         self.file = ""
@@ -777,8 +777,6 @@ class acWindow(tk.Frame):
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
         self.fileLabel = ttk.Label(self, width=45, font=("Arial", 10))
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
-        self.dirLabel = ttk.Label(self, width=45, font=("Arial", 10))
-        self.dirLabel.grid(row=2, column=1, columnspan=2, sticky="w")
 
     def create_buttons(self):
         """
@@ -786,8 +784,6 @@ class acWindow(tk.Frame):
         """
         self.selectBtn = ttk.Button(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
-        # self.ourdirBtn = ttk.Button(self, text="Output directory", command=self.selectDir)
-        # self.ourdirBtn.grid(row=2, column=0, padx=0, pady=5)
         self.startBtn = ttk.Button(self, text="Calculate", command=self.run)
         self.startBtn.grid(row=4, column=1, sticky="w")
         self.backBtn = ttk.Button(self, text="Back", command=self.back)
@@ -877,7 +873,7 @@ class newProcessWin(tk.Frame):
         super().__init__(master)
         self.master = master
         self.config(bg="white")
-        self.canvas = tk.Canvas(self, width=475, height=300, bg="white",border=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=685, height=350, bg="white",border=0, highlightthickness=0)
         self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
         self.create_widgets()
     
