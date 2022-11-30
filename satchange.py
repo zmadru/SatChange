@@ -3,7 +3,7 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk, filedialog
 from tkinter import *
-import tkintermapview as tmv
+# import tkintermapview as tmv
 import os
 from tkinter.messagebox import showerror, showinfo
 import lib.stackIntFiles as stackInt
