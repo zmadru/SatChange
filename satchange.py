@@ -94,7 +94,7 @@ class App(ctk.CTk):
         if not self.indwin.winfo_exists():
             self.indwin = IndexWindow(self)
             # center the window
-            self.indwin.pack(expand=True)
+            self.indwin.pack(expand=True, padx=10, pady=10, fill="both")
 
     def viewStack(self, solo = True):
         """
