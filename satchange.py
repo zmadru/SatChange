@@ -3,6 +3,7 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk, filedialog
 from tkinter import *
+import tkintermapview as tmv
 import os
 from tkinter.messagebox import showerror, showinfo
 import lib.stackIntFiles as stackInt
@@ -39,7 +40,13 @@ class App(ctk.CTk):
         self.geometry("685x350")
         self.create_widgets()
         self.indwin = IndexWindow(self)
-        self.indwin.grid(row=0, column=0, sticky="nsew")
+        self.indwin.pack(expand=True, padx=10, pady=10, fill="both")
+        self.stackwin = None
+        self.intwin = None
+        self.filtwin = None
+        self.indexwin = None
+        self.autowin = None
+        self.newwin = None
 
     def create_widgets(self):
         """
@@ -84,9 +91,10 @@ class App(ctk.CTk):
         """
         Show the index window
         """
-        self.indwin = IndexWindow(self)
-        # center the window
-        self.indwin.grid(row=0, column=0, sticky="ns")
+        if not self.indwin.winfo_exists():
+            self.indwin = IndexWindow(self)
+            # center the window
+            self.indwin.pack(expand=True)
 
     def viewStack(self, solo = True):
         """
@@ -95,10 +103,16 @@ class App(ctk.CTk):
         Args:
             solo (bool, optional): Single ejecution flag. Defaults to True.
         """
-        self.indwin.grid_forget()
-        self.stwin = StackWindow(self)
-        self.stwin.solo = solo
-        self.stwin.grid(row=0, column=0, sticky="nsew")
+        try:
+            self.indwin.destroy()
+            self.stackwin.destroy()
+            self.stackwin = StackWindow(self)
+            self.stackwin.pack(expand=True, fill="both", padx=10, pady=10)
+        except:
+            self.stackwin = StackWindow(self)
+            self.stackwin.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        
     
     def interpolation(self, solo = True):
         """
@@ -108,9 +122,9 @@ class App(ctk.CTk):
             solo (bool, optional): Single ejecution flag. Defaults to True.
         """
         if solo:
-            self.indwin.grid_forget()
+            self.indwin.destroy()
         self.intwin = InterpolationWindow(self, solo)
-        self.intwin.grid(row=0, column=0, sticky="nsew")
+        self.intwin.pack(expand=True, fill="both", padx=10, pady=10)
 
     def filter(self, solo = True):
         """
@@ -120,35 +134,35 @@ class App(ctk.CTk):
             solo (bool, optional): Single ejecution flag. Defaults to True.
         """
         if solo:
-            self.indwin.grid_forget()
+            self.indwin.destroy()
         self.filtwin = FilterWindow(self, solo)
-        self.filtwin.grid(row=0, column=0, sticky="nsew")
+        self.filtwin.pack(expand=True, fill="both", padx=10, pady=10)
 
     def indexes(self, solo = True):
         """
         Show the indexes window
         """
         if solo:
-            self.indwin.grid_forget()
+            self.indwin.destroy()
         self.indexwin = IndexesWindow(self, solo)
-        self.indexwin.grid(row=0, column=0, sticky="nsew")
+        self.indexwin.pack(expand=True, fill="both", padx=10, pady=10)
     
     def autocorrelation(self, solo = True):
         """
         Show the autocorrelation window
         """
         if solo:
-            self.indwin.grid_forget()
+            self.indwin.destroy()
         self.autowin = AcWindow(self, solo)
-        self.autowin.grid(row=0, column=0, sticky="nsew")
+        self.autowin.pack(expand=True, fill="both", padx=10, pady=10)
 
     def newProcess(self):
         """
         Show the new process window
         """
-        self.indwin.grid_forget()
+        self.indwin.destroy()
         self.newwin = NewProcessWin(self)
-        self.newwin.grid(row=0, column=0, sticky="nsew")
+        self.newwin.pack(expand=True, fill="both", padx=10, pady=10)
     
 class IndexWindow(ctk.CTkFrame):
     """
@@ -161,12 +175,8 @@ class IndexWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.configure(bg=master["bg"])
-        label = ctk.CTkLabel(self, text="Satchange", text_font=("Arial", 30))
-        self.canvas = ctk.CTkCanvas(self, width=685, height=350, highlightthickness=0, bg=label["bg"])
-        self.canvas.grid(row=0, column=0, columnspan=4, rowspan=8)
-        self.canvasaux = ctk.CTkCanvas(self, width=685, height=100, highlightthickness=0, bg=master['bg'])
-        self.canvasaux.grid(row=0, column=0, columnspan=4, rowspan=1)
+        self.grid_rowconfigure(0, weight=7)
+        self.grid_columnconfigure((0,1), weight=3)
         self.create_widgets()
 
     def create_widgets(self):
@@ -181,20 +191,18 @@ class IndexWindow(ctk.CTkFrame):
         Create the labels of the index window
         """
         logo = tk.PhotoImage(file="img/Logo2.png")
-        logo = logo.subsample(6)
-        self.label1 = ctk.CTkLabel(self, image=logo, bg_color=self.master["bg"])
+        logo = logo.subsample(5)
+        self.label1 = ctk.CTkLabel(self, image=logo)
         self.label1.image = logo
-        self.label1.grid(row=0, column=0, pady=10, padx=10)
+        self.label1.grid(row=0, column=0)
         img = tk.PhotoImage(file="img/convenio.png")
         self.labelimg = ctk.CTkLabel(self, image=img)
         self.labelimg.image = img
         self.labelimg.grid(row=0, column=1, columnspan=3, rowspan=1)
-        self.separator1 = ttk.Separator(self, orient=HORIZONTAL)
-        # self.separator1.grid(row=1, column=0, columnspan=4, sticky="ew", pady=10, padx=10)
         self.label2 = ctk.CTkLabel(self, text="New single process", text_font=("Arial", 15))
         self.label2.grid(row=2, column=0, pady=10, padx=10, columnspan=2)
         self.separator2 = ttk.Separator(self, orient=VERTICAL)
-        self.separator2.grid(row=2, column=2, rowspan=5, sticky="ns")
+        self.separator2.grid(row=2, column=2, rowspan=5, sticky="ns", pady=10, padx=10)
         self.label3 = ctk.CTkLabel(self, text="New complete process", text_font=("Arial", 15))
         self.label3.grid(row=2, column=3, pady=10, padx=10)
     
@@ -210,17 +218,17 @@ class IndexWindow(ctk.CTkFrame):
 
         # Individual process
         self.button3 = ctk.CTkButton(self, text="Stack", command=self.master.viewStack)
-        self.button3.grid(row=3, column=0,sticky="ew", padx=10)
+        self.button3.grid(row=3, column=0)
         self.button4 = ctk.CTkButton(self, text="Interpolation", command=self.master.interpolation)
-        self.button4.grid(row=4, column=0, sticky="ew", padx=10)
+        self.button4.grid(row=4, column=0)
         self.button5 = ctk.CTkButton(self, text="Autocorrelation", command=self.master.autocorrelation)
-        self.button5.grid(row=5, column=0, sticky="ew", padx=10)
+        self.button5.grid(row=5, column=0)
         self.button6 = ctk.CTkButton(self, text="Change detection")
-        self.button6.grid(row=5, column=1, sticky="ew", padx=10)
+        self.button6.grid(row=5, column=1)
         self.button7 = ctk.CTkButton(self, text="Filter", command=self.master.filter)
-        self.button7.grid(row=3, column=1, sticky="ew", padx=10)
+        self.button7.grid(row=3, column=1)
         self.button8 = ctk.CTkButton(self, text="Indexes", command=self.master.indexes)
-        self.button8.grid(row=4, column=1, sticky="ew", padx=10)
+        self.button8.grid(row=4, column=1)
     
   
 class StackWindow(ctk.CTkFrame):
@@ -234,9 +242,11 @@ class StackWindow(ctk.CTkFrame):
         Constructor
         """
         super().__init__(master)
-        self.label1 = ctk.CTkLabel(self, text="Stack", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=self.label1['bg'], highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=7)
+        # self.label1 = ctk.CTkLabel(self, text="Stack", text_font=("Arial", 25))
+        # self.canvas = tk.Canvas(self,bg=self.label1['bg'], highlightthickness=0)
+        # self.canvas.grid(row=0, column=0, columnspan=3, rowspan=7)
+        self.grid_rowconfigure(0, weight=7)
+        self.grid_columnconfigure((0,1), weight=3)
         self.create_widgets()
         self.solo = True
 
@@ -252,12 +262,14 @@ class StackWindow(ctk.CTkFrame):
         Create the entrys of the GUI
         """
         self.label1 = ctk.CTkLabel(self, text="Stack", text_font=("Arial", 25))
-        self.label1.grid(row=0, column=0, sticky="ew")
+        self.label1.grid(row=0, column=0)
         self.entryIn = ctk.CTkLabel(self, width=45, text="0 images selected" ,text_font=("Arial", 10))
         self.entryIn.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="w")
 
-        self.entryOut = ctk.CTkLabel(self, width=45,text="Output directory not selected", text_font=("Arial", 10))
-        self.entryOut.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="w")
+        self.entryOut = ctk.CTkTextbox(self, width=45, height=22, text_font=("Arial", 10))
+        self.entryOut.insert("0.0", "Output directory not selected")
+        self.entryOut.configure(state="disabled")
+        self.entryOut.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="we") 
 
         self.nameLabel = ctk.CTkLabel(self, text="Stack name", text_font=("Arial", 10))
         self.nameLabel.grid(row=3, column=0, padx=5, pady=5)
@@ -265,6 +277,10 @@ class StackWindow(ctk.CTkFrame):
         self.entryName.grid(row=3, column=1, padx=5, pady=5, sticky="we", columnspan=1)
         self.label = ctk.CTkLabel(self, text=".tif", text_font=("Arial, 10"))
         self.label.grid(row=3, column=2, sticky="w")
+        self.void = ctk.CTkLabel(self, text=" ")
+        self.void.grid(row=7, column=0, sticky="w")
+        
+
 
     def create_buttons(self):
         """
@@ -278,9 +294,9 @@ class StackWindow(ctk.CTkFrame):
 
       
         self.buttonStart = ctk.CTkButton(self, text="Start", command=self.run)
-        self.buttonStart.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        self.buttonStart.grid(row=4, column=1, padx=10, pady=10)
         self.buttonClose = ctk.CTkButton(self, text="Back", command=self.cancel)
-        self.buttonClose.grid(row=4, column=2, padx=5, pady=5, sticky="w")
+        self.buttonClose.grid(row=4, column=2, padx=10, pady=10)
 
     def dirIn(self): 
         """
@@ -296,7 +312,9 @@ class StackWindow(ctk.CTkFrame):
         global dir_out
 
         self.out_dir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output Directory") 
-        self.entryOut.configure(text=self.out_dir)
+        self.entryOut.configure(state="normal")
+        self.entryOut.insert("0.0", self.out_dir)
+        self.entryOut.configure(state="disabled")
         dir_out = self.out_dir
 
     def stack(self):
@@ -312,12 +330,12 @@ class StackWindow(ctk.CTkFrame):
             showerror("Error", "All fields must be filled")
         else:
             self.pb = ctk.CTkProgressBar(self, orient=HORIZONTAL, mode='indeterminate', width=300)
-            self.pb.grid(row=6, column=1, padx=5, pady=5, columnspan=2, sticky="w")
+            self.pb.grid(row=6, column=1, padx=5, pady=5, columnspan=2, sticky="we")
             # disable the buttons during the process
             self.buttonStart.configure(state="disabled")
             self.buttonClose.configure(state="disabled")
             self.pbLabel = ctk.CTkLabel(self, justify="right", text="0/0")
-            self.pbLabel.grid(row=6, column=0, padx=15, pady=5, sticky="e")
+            self.pbLabel.grid(row=6, column=0, padx=15, pady=5)
             thd = Thread(target=stackInt.stack, args=(self.in_files, self.out_dir, name))
             thd.start()
             self.pb.start()
@@ -332,13 +350,14 @@ class StackWindow(ctk.CTkFrame):
                 self.pb.update()
                 self.update()
 
-            self.pb.grid_forget()
-            self.pbLabel.grid_forget()
-            self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
+            self.pbLabel.configure(text=str("Saving..."))
 
             if thd.is_alive():
                 thd.join()
 
+            self.pb.grid_forget()
+            self.pbLabel.grid_forget()
+            
             if self.solo:
                 showinfo("Satchange", "The process has finished, "+stackInt.out_file+" has been created")
             else:
@@ -375,9 +394,8 @@ class InterpolationWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.label = ctk.CTkLabel(self, text="Interpolation", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=self.label['bg'], border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
+        self.grid_rowconfigure((0,1), weight=4)
+        self.grid_columnconfigure((0,1), weight=3)
         self.solo = solo
         self.create_widgets()
         if not solo:
@@ -398,7 +416,7 @@ class InterpolationWindow(ctk.CTkFrame):
         Create the label of the window
         """
         self.label = ctk.CTkLabel(self, text="Interpolation", text_font=("Arial", 25))
-        self.label.grid(row=0, column=0, columnspan=2)
+        self.label.grid(row=0, column=0)
         self.fileLabel = ctk.CTkLabel(self, width=45, text_font=("Arial", 10), text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
 
@@ -407,11 +425,11 @@ class InterpolationWindow(ctk.CTkFrame):
         Create the buttons of the window
         """
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
-        self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.selectBtn.grid(row=1, column=0, padx=10, pady=10)
         self.startBtn = ctk.CTkButton(self, text="Interpolate", command=self.run)
-        self.startBtn.grid(row=3, column=1, sticky="w")
+        self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
-        self.backBtn.grid(row=3, column=2)
+        self.backBtn.grid(row=3, column=2, padx=10, pady=10)
 
     def selectMode(self):
         """
@@ -420,7 +438,7 @@ class InterpolationWindow(ctk.CTkFrame):
         self.labelSelect = ctk.CTkLabel(self, text="Select the mode ->")
         self.labelSelect.grid(row=2, column=0, padx=5, pady=5)
         self.modeSelect = ttk.Combobox(self, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'], state="readonly")
-        self.modeSelect.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.modeSelect.grid(row=2, column=1, padx=5, pady=5, sticky="we")
         self.modeSelect.current(0)
         
     def select(self):
@@ -502,9 +520,8 @@ class FilterWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        label = ctk.CTkLabel(self, text="Filter", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan= 4)
+        self.grid_rowconfigure(0, weight=4)
+        self.grid_columnconfigure((0,1), weight=2)
         self.solo = solo
         self.create_widgets()
         self.file = ""
@@ -631,9 +648,8 @@ class IndexesWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        label = ctk.CTkLabel(self, text="Indexes", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        self.grid_rowconfigure(0, weight=5)
+        self.grid_columnconfigure((0,1), weight=2)
         self.solo = solo
         self.create_widgets()
         if not solo:
@@ -764,9 +780,8 @@ class AcWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        label = ctk.CTkLabel(self, text="AC", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        self.grid_rowconfigure(0, weight=5)
+        self.grid_columnconfigure((0,1), weight=2)
         self.solo = solo
         self.file = ""
         self.create_widgets()
@@ -794,9 +809,9 @@ class AcWindow(ctk.CTkFrame):
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.run)
-        self.startBtn.grid(row=3, column=1, sticky="w")
+        self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
-        self.backBtn.grid(row=3, column=2)
+        self.backBtn.grid(row=3, column=2, padx=10, pady=10)
 
     def select(self):
         """
@@ -881,9 +896,8 @@ class NewProcessWin(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        label = ctk.CTkLabel(self, text="New process", text_font=("Arial", 25))
-        self.canvas = tk.Canvas(self, width=685, height=350, bg=label['bg'], border=0, highlightthickness=0)
-        self.canvas.grid(row=0, column=0, columnspan=3, rowspan=6)
+        self.grid_rowconfigure(0, weight=3)
+        self.grid_columnconfigure((0,1), weight=3)
         self.create_widgets()
     
     def create_widgets(self):
@@ -892,6 +906,9 @@ class NewProcessWin(ctk.CTkFrame):
         """
         self.create_label()
         self.create_buttons()
+        # self.map = tmv.TkinterMapView(self)
+        # self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)  # google satellite
+        # self.map.grid(row=0, column=0, columnspan=3, rowspan=4, sticky="nsew")
 
     def create_label(self):
         """
@@ -905,9 +922,9 @@ class NewProcessWin(ctk.CTkFrame):
         Create the buttons of the window
         """
         self.startBtn = ctk.CTkButton(self, text="Start", command=self.run)
-        self.startBtn.grid(row=4, column=1, sticky="w")
+        self.startBtn.grid(row=4, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
-        self.backBtn.grid(row=4, column=2)
+        self.backBtn.grid(row=4, column=2, padx=10, pady=10)
 
     def run(self):
         """
