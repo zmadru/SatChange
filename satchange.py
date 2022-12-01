@@ -782,7 +782,6 @@ class IndexesWindow(ctk.CTkFrame):
         """
         Back to the index window
         """
-        self.destroy()
         self.master.index()
 
 class AcWindow(ctk.CTkFrame):
@@ -911,8 +910,8 @@ class NewProcessWin(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure(0, weight=3)
-        self.grid_columnconfigure((0,1), weight=3)
+        self.grid_rowconfigure((0,3), weight=3)
+        self.grid_columnconfigure((0,3), weight=3)
         self.create_widgets()
     
     def create_widgets(self):
@@ -927,7 +926,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="New Satchange process")
+        self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",36))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
     def create_buttons(self):
