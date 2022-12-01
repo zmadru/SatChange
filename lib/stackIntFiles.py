@@ -27,6 +27,7 @@ total: int = 0
 progress: int = 0
 start: bool = False
 out_file = None
+saving: bool = False
 # Detect the OS to set the correct comand to clean the screen
 if platform.system() == "Windows":
     clear = "cls"
@@ -116,7 +117,7 @@ def stack(in_files: list, dir_out: str, out_name: str):
     Returns:
         str: The output file path
     """
-    global outdata, total, out_file
+    global outdata, total, out_file, saving
     total = 0
 
     # Get the first file to get the metadata
@@ -139,6 +140,8 @@ def stack(in_files: list, dir_out: str, out_name: str):
     
     __readDir(in_files) # Call the readDir function
 
+    # Save the stack
+    saving = True
     outdata.SetGeoTransform(src_file.GetGeoTransform())  # Set the geotransform
     outdata.SetProjection(src_file.GetProjection())  # Set the projection
     outdata.FlushCache()  # Flush the cache
@@ -147,6 +150,7 @@ def stack(in_files: list, dir_out: str, out_name: str):
     gdal.Translate(dir_out+"/"+out_name+".tif", dir_out+"/temp.tif", format="GTiff", creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
     os.remove(dir_out+"/temp.tif") # Remove the stack in BIL format
     out_file = dir_out+"/"+out_name+".tif" # Return the stack path
+    saving = False
 
 
 
