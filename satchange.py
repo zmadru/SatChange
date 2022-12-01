@@ -792,7 +792,7 @@ class AcWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure((0,4), weight=5)
+        self.grid_rowconfigure((0,5), weight=5)
         self.grid_columnconfigure((0,3), weight=2)
         self.solo = solo
         self.file = ""
@@ -824,6 +824,9 @@ class AcWindow(ctk.CTkFrame):
         self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
         self.backBtn.grid(row=3, column=2, padx=10, pady=10)
+        self.pb = ctk.CTkProgressBar(self, mode='determinate')
+        self.pb.set(0)
+        self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
 
     def select(self):
         """
@@ -852,7 +855,7 @@ class AcWindow(ctk.CTkFrame):
             self.thd = Thread(target=ACF.ACFtif, args=(self.file))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
-            self.pb.grid(row=5, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
+            self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
             self.pb.start()
             self.percentajeLabel = ctk.CTkLabel(self, text="0%")
             self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
