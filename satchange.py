@@ -3,7 +3,6 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk, filedialog
 from tkinter import *
-# import tkintermapview as tmv
 import os
 from tkinter.messagebox import showerror, showinfo
 import lib.stackIntFiles as stackInt
@@ -906,9 +905,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         self.create_label()
         self.create_buttons()
-        # self.map = tmv.TkinterMapView(self)
-        # self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)  # google satellite
-        # self.map.grid(row=0, column=0, columnspan=3, rowspan=4, sticky="nsew")
+        
 
     def create_label(self):
         """
