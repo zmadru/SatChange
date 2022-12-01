@@ -185,17 +185,15 @@ class IndexWindow(ctk.CTkFrame):
         logo = tk.PhotoImage(file="img/Logo2.png")
         logo = logo.subsample(6)
         self.label1 = ctk.CTkLabel(self, image=logo, text="", corner_radius=0)
-        self.label1.image = logo
         self.label1.grid(row=0, column=0, padx=10, pady=10)
         img = tk.PhotoImage(file="img/convenio.png")
         self.labelimg = ctk.CTkLabel(self, image=img, text="")
-        self.labelimg.image = img
         self.labelimg.grid(row=0, column=1, columnspan=3, rowspan=1, padx=10, pady=10)
-        self.label2 = ctk.CTkLabel(self, text="New single process",font=("Helvetica", 16))
+        self.label2 = ctk.CTkLabel(self, text="New single process",font=("Helvetica", 16, "bold"))
         self.label2.grid(row=2, column=0, pady=10, padx=10, columnspan=2)
         self.separator2 = ttk.Separator(self, orient=VERTICAL)
         self.separator2.grid(row=2, column=2, rowspan=5, sticky="ns", pady=10, padx=10)
-        self.label3 = ctk.CTkLabel(self, text="New complete process",font=("Helvetica", 16))
+        self.label3 = ctk.CTkLabel(self, text="New complete process",font=("Helvetica", 16, "bold"))
         self.label3.grid(row=2, column=3, pady=10, padx=10)
     
     def create_buttons(self):
@@ -250,7 +248,7 @@ class StackWindow(ctk.CTkFrame):
         """
         Create the entrys of the GUI
         """
-        self.label1 = ctk.CTkLabel(self, text="Stack",font=("Helvetica", 36))
+        self.label1 = ctk.CTkLabel(self, text="Stack",font=("Helvetica", 36, "bold"))
         self.label1.grid(row=0, column=0)
         self.entryIn = ctk.CTkLabel(self, width=45, text="0 images selected")
         self.entryIn.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="w")
@@ -411,7 +409,7 @@ class InterpolationWindow(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="Interpolation", font=("Helvetica", 36))
+        self.label = ctk.CTkLabel(self, text="Interpolation", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, rowspan=1)
         self.fileLabel = ctk.CTkLabel(self, text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
@@ -539,7 +537,7 @@ class FilterWindow(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="Filter", font=("Helvetica",36))
+        self.label = ctk.CTkLabel(self, text="Filter", font=("Helvetica",36, "bold"))
         self.label.grid(row=0, column=0, columnspan=1)
         self.fileLabel = ctk.CTkLabel(self, width=45, text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w", padx=10, pady=10)
@@ -665,7 +663,7 @@ class IndexesWindow(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="Indexes", font=("Helvetica",36))
+        self.label = ctk.CTkLabel(self, text="Indexes", font=("Helvetica",36, "bold"))
         self.label.grid(row=0, column=0, columnspan=1)
         self.fileLabel = ctk.CTkLabel(self, width=45, text="No file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, padx=10, pady=10, sticky="w")
@@ -811,7 +809,7 @@ class AcWindow(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="Autocorrelation", font=("Helvetica",36))
+        self.label = ctk.CTkLabel(self, text="Autocorrelation", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
         self.fileLabel = ctk.CTkLabel(self, width=45, text="No input file selected")
         self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
@@ -926,7 +924,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",36))
+        self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",36,"bold"))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
     def create_buttons(self):
