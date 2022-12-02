@@ -1,6 +1,7 @@
 scipy
 numpy
 tk
+customtkinter
 pandas
 matplotlib
 statsmodels
