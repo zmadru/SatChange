@@ -250,8 +250,10 @@ class StackWindow(ctk.CTkFrame):
         """
         self.label1 = ctk.CTkLabel(self, text="Stack",font=("Helvetica", 36, "bold"))
         self.label1.grid(row=0, column=0)
-        self.entryIn = ctk.CTkLabel(self, width=45, text="0 images selected")
-        self.entryIn.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="w")
+        self.entryIn = ctk.CTkTextbox(self, width=45, height=22)
+        self.entryIn.insert("0.0", "0 files selected")
+        self.entryIn.configure(state="disabled")
+        self.entryIn.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="we")
 
         self.entryOut = ctk.CTkTextbox(self, width=45, height=22,)
         self.entryOut.insert("0.0", "Output directory not selected")
@@ -294,7 +296,10 @@ class StackWindow(ctk.CTkFrame):
         Open a file dialog to select the input directory
         """
         self.in_files = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select the input files", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))  
-        self.entryIn.configure(text=(str(len(self.in_files))+" selected"))
+        self.entryIn.configure(state="normal")
+        self.entryIn.delete("0.0", "end")
+        self.entryIn.insert("0.0",(str(len(self.in_files))+" selected"))
+        self.entryIn.configure(state="disabled")
 
     def dirOut(self):
         """
@@ -411,8 +416,10 @@ class InterpolationWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Interpolation", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, rowspan=1)
-        self.fileLabel = ctk.CTkLabel(self, text="No file selected")
-        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="we", padx=10, pady=10)
 
     def create_buttons(self):
         """
@@ -436,7 +443,7 @@ class InterpolationWindow(ctk.CTkFrame):
         self.labelSelect = ctk.CTkLabel(self, text="Select the mode ->")
         self.labelSelect.grid(row=2, column=0, padx=10, pady=10)
         self.modeSelect = ctk.CTkOptionMenu(self, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'])
-        self.modeSelect.grid(row=2, column=1, padx=10, pady=10, sticky="we")
+        self.modeSelect.grid(row=2, column=1, sticky="we", padx=10, pady=10)
         self.modeSelect.set("linear")
         
     def select(self):
@@ -444,7 +451,10 @@ class InterpolationWindow(ctk.CTkFrame):
         Select the file to interpolate
         """
         self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to interpolate", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
-        self.fileLabel.config(text=self.file)
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
+        self.fileLabel.insert("0.0",self.file)
+        self.fileLabel.configure(state="disabled")
 
     def interpolate(self):
         """
@@ -539,8 +549,10 @@ class FilterWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Filter", font=("Helvetica",36, "bold"))
         self.label.grid(row=0, column=0, columnspan=1)
-        self.fileLabel = ctk.CTkLabel(self, width=45, text="No file selected")
-        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w", padx=10, pady=10)
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="we", padx=10, pady=10)
 
     def create_buttons(self):
         """
@@ -571,7 +583,10 @@ class FilterWindow(ctk.CTkFrame):
         Select the file to filter
         """
         self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
-        self.fileLabel.config(text=self.file)
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
+        self.fileLabel.insert("0.0",self.file)
+        self.fileLabel.configure(state="disabled")
 
     def filter(self):
         """
@@ -665,8 +680,10 @@ class IndexesWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Indexes", font=("Helvetica",36, "bold"))
         self.label.grid(row=0, column=0, columnspan=1)
-        self.fileLabel = ctk.CTkLabel(self, width=45, text="No file selected")
-        self.fileLabel.grid(row=1, column=1, columnspan=2, padx=10, pady=10, sticky="w")
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, padx=10, pady=10, sticky="we")
         self.dirLabel = ctk.CTkTextbox(self, width=45, height=22)
         self.dirLabel.insert("0.0", "No directory selected")
         self.dirLabel.configure(state="disabled")
@@ -706,12 +723,15 @@ class IndexesWindow(ctk.CTkFrame):
         Select the file/files to filter
         """
         self.file = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
         if len(self.file) == 1:
-            self.fileLabel.config(text=self.file[0])
+            self.fileLabel.insert("0.0",self.file[0])
         elif len(self.file) >= 2:
-            self.fileLabel.config(text=(str(len(self.file))+ " files selected"))
+            self.fileLabel.insert("0.0",(str(len(self.file))+ " files selected"))
         else:
-            self.fileLabel.config(text="No input file selected")
+            self.fileLabel.insert("0.0","No input file selected")
+        self.fileLabel.configure(state="disabled")
 
     def selectDir(self):
         """
@@ -811,8 +831,10 @@ class AcWindow(ctk.CTkFrame):
         """
         self.label = ctk.CTkLabel(self, text="Autocorrelation", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
-        self.fileLabel = ctk.CTkLabel(self, width=45, text="No input file selected")
-        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No input file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="we",padx=10, pady=10)
 
     def create_buttons(self):
         """
@@ -833,10 +855,13 @@ class AcWindow(ctk.CTkFrame):
         Select the file to calculate the AC
         """
         self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
         if self.file != "":
-            self.fileLabel.config(text=self.file)
+            self.fileLabel.insert("0.0",self.file)
         else:
-            self.fileLabel.config(text="No input file selected")
+            self.fileLabel.insert("0.0","No input file selected")
+        self.fileLabel.configure(state="disabled")
 
     def selectDir(self):
         """
