@@ -1,3 +1,4 @@
+import sys
 import time
 import tkinter as tk
 import customtkinter as ctk
@@ -23,6 +24,8 @@ dir_out: str = ""
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
+error = open("error.log", "w")
+
 class App(ctk.CTk):
     """
     App class
@@ -46,6 +49,8 @@ class App(ctk.CTk):
         self.indexwin = IndexesWindow(self)
         self.autowin = AcWindow(self)
         self.newwin = NewProcessWin(self)
+        # when the window end delete the error log file
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_widgets(self):
         """
@@ -77,7 +82,16 @@ class App(ctk.CTk):
         self.help_menu = tk.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=self.help_menu)
         self.help_menu.add_command(label="About", command=self.about)
+        self.help_menu.add_command(label="Log", command=self.log)
         self.help_menu.add_command(label="Exit", command=self.destroy)
+
+    def on_closing(self):
+        """
+        When the window is closed, delete the error log file
+        """
+        error.close()
+        os.remove("error.log")
+        self.destroy()
 
     
     def about(self):
@@ -85,6 +99,31 @@ class App(ctk.CTk):
         Show the about message
         """
         showinfo("About", "Satchange is a program to detect ground change using satellite images")
+
+
+    def log(self):
+        """
+        Show the log console window
+        """
+        global error
+
+        error.close()
+        error = open("error.log", "r")
+        self.logwin = ctk.CTkToplevel(self)
+        self.logwin.title("Log")
+        self.logwin.geometry("700x300")
+        self.logwin.iconphoto(True, tk.PhotoImage(file="img\Windows_Terminal_Logo.png"))
+        self.logwin.resizable(0, 0)
+        
+        textbox = ctk.CTkTextbox(self.logwin)
+        textbox.pack(expand=True, fill="both", padx=10, pady=10)
+        textbox.insert("end", error.readlines())
+        textbox.configure(state="disabled")
+        sys.stderr = error
+
+
+
+        
 
     def unpackAll(self):
         self.indwin.pack_forget()
@@ -977,5 +1016,8 @@ class NewProcessWin(ctk.CTkFrame):
 
         
 if __name__ == "__main__":
+    # redirect stderr to a file
+    sys.stderr = error
+    # Initialize the main window
     app = App()
     app.mainloop()
