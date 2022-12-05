@@ -113,7 +113,6 @@ class App(ctk.CTk):
         self.logwin.title("Log")
         self.logwin.geometry("700x300")
         self.logwin.iconphoto(True, tk.PhotoImage(file="img\Windows_Terminal_Logo.png"))
-        self.logwin.resizable(0, 0)
         
         textbox = ctk.CTkTextbox(self.logwin)
         textbox.pack(expand=True, fill="both", padx=10, pady=10)
@@ -975,7 +974,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure((0,3), weight=3)
+        self.grid_rowconfigure((0,5), weight=3)
         self.grid_columnconfigure((0,3), weight=3)
         self.create_widgets()
     
@@ -991,7 +990,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Create the label of the window
         """
-        self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",36,"bold"))
+        self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",32,"bold"))
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
     def create_buttons(self):
