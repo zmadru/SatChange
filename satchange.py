@@ -112,7 +112,7 @@ class App(ctk.CTk):
         self.logwin = ctk.CTkToplevel(self)
         self.logwin.title("Log")
         self.logwin.geometry("700x300")
-        self.logwin.iconphoto(True, tk.PhotoImage(file="img\Windows_Terminal_Logo.png"))
+        self.logwin.iconphoto(False, tk.PhotoImage(file="img\Windows_Terminal_Logo.png"))
         
         textbox = ctk.CTkTextbox(self.logwin)
         textbox.pack(expand=True, fill="both", padx=10, pady=10)
@@ -222,7 +222,8 @@ class IndexWindow(ctk.CTkFrame):
         """
         logo = tk.PhotoImage(file="img/Logo2.png")
         logo = logo.subsample(6)
-        self.label1 = ctk.CTkLabel(self, image=logo, text="", corner_radius=0)
+        self.label1 = ctk.CTkLabel(self, image=logo, text="")
+        self.label1['image'] = logo
         self.label1.grid(row=0, column=0, padx=10, pady=10)
         img = tk.PhotoImage(file="img/convenio.png")
         self.labelimg = ctk.CTkLabel(self, image=img, text="")
@@ -967,7 +968,6 @@ class NewProcessWin(ctk.CTkFrame):
     """
     Class that contains the window to start a new entire process
     """
-
     def __init__(self, master):
         """
         Constructor
@@ -975,9 +975,109 @@ class NewProcessWin(ctk.CTkFrame):
         super().__init__(master)
         self.master = master
         self.grid_rowconfigure((0,5), weight=3)
-        self.grid_columnconfigure((0,3), weight=3)
+        self.grid_columnconfigure((0,4), weight=5)
         self.create_widgets()
+        
+
+    def createtoplevel(self):
+        """
+        Create the toplevel window
+        """
+        self.toplevel = ctk.CTkToplevel(self.master)
+        self.toplevel.title("New Satchange process")
+        self.toplevel.geometry("700x500")
+        self.toplevel.resizable(False, False)
+        self.toplevel.grid_rowconfigure((0,1), weight=1)
+        self.toplevel.grid_columnconfigure((0,1,2,3), weight=3)
+
+        # two frames, one for the input images and other for the configuration options
+        self.inputFrame = ctk.CTkFrame(self.toplevel)
+        self.inputFrame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew", rowspan=2)
+        self.inputFrame.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.inputFrame.grid_columnconfigure((0), weight=1)
+        self.create_inputwidgets()
+
+        self.configFrame = ctk.CTkFrame(self.toplevel)
+        self.configFrame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew", columnspan=3, rowspan=2)
+        self.configFrame.grid_rowconfigure((0,1,2,3,4), weight=1)
+        self.configFrame.grid_columnconfigure((0,1,2,3), weight=1)
+        self.create_configwidgets()
+        
+    def create_inputwidgets(self):
+        """
+        Create the widgets of the input frame
+        """
+        self.inputLabel = ctk.CTkLabel(self.inputFrame, text="Input images", font=("Helvetica",16,"bold"))
+        self.inputLabel.grid(row=0, column=0)
+
+        self.infilesButton = ctk.CTkButton(self.inputFrame, text="Select input files", state="disabled", command=self.selectFiles)
+        self.infilesButton.grid(row=1, column=0, padx=5, pady=5)
+        self.rawSwitch = ctk.CTkSwitch(self.inputFrame, text="Raw images", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        self.rawSwitch.grid(row=2, column=0, padx=15, pady=5, sticky="w")
+        self.procesedSwitch = ctk.CTkSwitch(self.inputFrame, text="Processed images", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        self.procesedSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
+        self.stackSwitch = ctk.CTkSwitch(self.inputFrame, text="Stack image", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        self.stackSwitch.grid(row=4, column=0, padx=15, pady=5, sticky="w")
+        self.nfilesLabel = ctk.CTkEntry(self.inputFrame)
+        self.nfilesLabel.insert(0, "0 files selected")
+        self.nfilesLabel.configure(state="disabled")
+        self.nfilesLabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew")
+
+        
+        
+        
+    def create_configwidgets(self):
+        """
+        Create the widgets of the configuration frame
+        """
+        self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
+        self.configLabel.grid(row=0, column=0, columnspan=1)
+        nextbutton = ctk.CTkButton(self.configFrame, text="Next")
+        nextbutton.grid(row=4, column=3, padx=5, pady=5)
+
+    def switch_behaviour(self):
+        """
+        Switch the behaviour of the buttons depending on the switch, and enable the button and disable the rest of the switches.
+        Just one switch can be active at the same time
+        """        
+        if self.rawSwitch.get() == True:
+            self.infilesButton.configure(state="normal")
+            self.procesedSwitch.configure(state="disabled")
+            self.stackSwitch.configure(state="disabled")
+        elif self.procesedSwitch.get() == True:
+            self.infilesButton.configure(state="normal")
+            self.rawSwitch.configure(state="disabled")
+            self.stackSwitch.configure(state="disabled")
+        elif self.stackSwitch.get() == True:
+            self.infilesButton.configure(state="normal")
+            self.rawSwitch.configure(state="disabled")
+            self.procesedSwitch.configure(state="disabled")
+        else:
+            self.rawSwitch.configure(state="normal")
+            self.procesedSwitch.configure(state="normal")
+            self.stackSwitch.configure(state="normal")
+            self.infilesButton.configure(state="disabled")
     
+    def selectFiles(self):
+        """
+        Select the input files depending of the option selected
+        """
+        text = ""
+        if self.rawSwitch.get() == True:
+            self.infiles = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select files the multiband images", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
+            text = str(len(self.infiles)) + " multiband images selected"
+        elif self.procesedSwitch.get() == True:
+            self.infiles = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select files the index calculated images", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
+            text = str(len(self.infiles)) + " index calculated images selected"
+        elif self.stackSwitch.get() == True:
+            self.infiles = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the stack", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
+            text = "1 stack image selected"
+
+        self.nfilesLabel.configure(state="normal")
+        self.nfilesLabel.delete(0, "end")
+        self.nfilesLabel.insert(0, text)
+        self.nfilesLabel.configure(state="disabled")
+        
     def create_widgets(self):
         """
         Create the widgets of the window
@@ -991,21 +1091,27 @@ class NewProcessWin(ctk.CTkFrame):
         Create the label of the window
         """
         self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",32,"bold"))
-        self.label.grid(row=0, column=0, columnspan=2, sticky="w")
+        self.label.grid(row=0, column=0, columnspan=3, sticky="w")
+        self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
+        self.infolabel.insert("0.0", '''This is a new satchange process. To start, press the "Start" button, and a options window will appear. Then, you can select the configuration you want to use, and press "Next" to continue.''')
+        self.infolabel.configure(state="disabled")
+        self.infolabel.grid(row=1, column=0, columnspan=5, sticky="ew")
 
     def create_buttons(self):
         """
         Create the buttons of the window
         """
         self.startBtn = ctk.CTkButton(self, text="Start", command=self.run)
-        self.startBtn.grid(row=4, column=1, padx=10, pady=10)
+        self.startBtn.grid(row=4, column=0, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
-        self.backBtn.grid(row=4, column=2, padx=10, pady=10)
+        self.backBtn.grid(row=4, column=3, padx=10, pady=10)
 
     def run(self):
         """
         Run the logic of the entire process
         """
+        self.createtoplevel()
+
 
     def back(self):
         """
