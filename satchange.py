@@ -999,7 +999,7 @@ class NewProcessWin(ctk.CTkFrame):
 
         self.configFrame = ctk.CTkFrame(self.toplevel)
         self.configFrame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew", columnspan=3, rowspan=2)
-        self.configFrame.grid_rowconfigure((0,1,2,3,4), weight=1)
+        self.configFrame.grid_rowconfigure((0,1,2,3,4,5), weight=3)
         self.configFrame.grid_columnconfigure((0,1,2,3), weight=1)
         self.create_configwidgets()
         
@@ -1024,16 +1024,32 @@ class NewProcessWin(ctk.CTkFrame):
         self.nfilesLabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew")
 
         
-        
-        
     def create_configwidgets(self):
         """
         Create the widgets of the configuration frame
         """
         self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
-        self.configLabel.grid(row=0, column=0, columnspan=1)
+        self.configLabel.grid(row=0, column=0)
         nextbutton = ctk.CTkButton(self.configFrame, text="Next")
-        nextbutton.grid(row=4, column=3, padx=5, pady=5)
+        nextbutton.grid(row=5, column=3, padx=5, pady=5)
+
+        self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
+        self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=["NDVI"])
+        self.indexSelect.configure(state="disabled")
+        self.indexSelect.grid(row=1, column=2, padx=5, pady=5)
+        self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=["Modis", "Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "AVHRR"])
+        self.indexSensor.configure(state="disabled")
+        self.indexSensor.grid(row=1, column=3, padx=5, pady=5)
+
+        self.stackLabel = ctk.CTkLabel(self.configFrame, text="Stack configuration")
+        self.stackLabel.grid(row=2, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.stackEntry = ctk.CTkEntry(self.configFrame, state="disabled")
+        self.stackEntry.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
+        self.stackLabel2 = ctk.CTkLabel(self.configFrame, text=".tif")
+        self.stackLabel2.grid(row=2, column=3, padx=5, pady=5, sticky="w") 
+
+
 
     def switch_behaviour(self):
         """
@@ -1042,21 +1058,38 @@ class NewProcessWin(ctk.CTkFrame):
         """        
         if self.rawSwitch.get() == True:
             self.infilesButton.configure(state="normal")
+            self.indexSelect.configure(state="normal")
+            self.indexSensor.configure(state="normal")
             self.procesedSwitch.configure(state="disabled")
             self.stackSwitch.configure(state="disabled")
+            self.stackEntry.configure(state="normal")
+            self.stackEntry.configure(placeholder_text="Stack name")
+            self.indexSelect.set("NDVI")
+            self.indexSensor.set("Modis")
         elif self.procesedSwitch.get() == True:
             self.infilesButton.configure(state="normal")
             self.rawSwitch.configure(state="disabled")
             self.stackSwitch.configure(state="disabled")
+            self.stackEntry.configure(state="normal")
+            self.stackEntry.configure(placeholder_text="Stack name")
+
         elif self.stackSwitch.get() == True:
             self.infilesButton.configure(state="normal")
             self.rawSwitch.configure(state="disabled")
             self.procesedSwitch.configure(state="disabled")
+            
         else:
             self.rawSwitch.configure(state="normal")
             self.procesedSwitch.configure(state="normal")
             self.stackSwitch.configure(state="normal")
             self.infilesButton.configure(state="disabled")
+            self.indexSelect.set("")
+            self.indexSensor.set("")
+            self.indexSelect.configure(state="disabled")
+            self.indexSensor.configure(state="disabled")
+            self.stackEntry.configure(placeholder_text="")
+            self.stackEntry.configure(state="disabled")
+            
     
     def selectFiles(self):
         """
@@ -1093,7 +1126,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.label = ctk.CTkLabel(self, text="New Satchange process", font=("Helvetica",32,"bold"))
         self.label.grid(row=0, column=0, columnspan=3, sticky="w")
         self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
-        self.infolabel.insert("0.0", '''This is a new satchange process. To start, press the "Start" button, and a options window will appear. Then, you can select the configuration you want to use, and press "Next" to continue.''')
+        self.infolabel.insert("0.0", '''This is a new satchange process. 
+        -To start, press the "Start" button, and a options window will appear. 
+        -Then, you can select the configuration you want to use, and press "Next" to continue.''')
         self.infolabel.configure(state="disabled")
         self.infolabel.grid(row=1, column=0, columnspan=5, sticky="ew")
 
