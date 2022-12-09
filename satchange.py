@@ -1030,9 +1030,12 @@ class NewProcessWin(ctk.CTkFrame):
         """
         self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
         self.configLabel.grid(row=0, column=0)
-        nextbutton = ctk.CTkButton(self.configFrame, text="Next")
-        nextbutton.grid(row=5, column=3, padx=5, pady=5)
+        self.nextbutton = ctk.CTkButton(self.configFrame, text="Next", command=self.checkparams, state="disabled")
+        self.nextbutton.grid(row=5, column=3, padx=5, pady=5)
+        self.backbutton = ctk.CTkButton(self.configFrame, text="Cancel", command=self.cancel)
+        self.backbutton.grid(row=5, column=0, padx=5, pady=5)
 
+        # TODO add the widgets to select the index and the sensor
         self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
         self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=["NDVI"])
@@ -1042,6 +1045,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.indexSensor.configure(state="disabled")
         self.indexSensor.grid(row=1, column=3, padx=5, pady=5)
 
+        # stack configuration
         self.stackLabel = ctk.CTkLabel(self.configFrame, text="Stack configuration")
         self.stackLabel.grid(row=2, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.stackEntry = ctk.CTkEntry(self.configFrame, state="disabled")
@@ -1049,7 +1053,28 @@ class NewProcessWin(ctk.CTkFrame):
         self.stackLabel2 = ctk.CTkLabel(self.configFrame, text=".tif")
         self.stackLabel2.grid(row=2, column=3, padx=5, pady=5, sticky="w") 
 
+        # interpolation configuration
+        self.interpLabel = ctk.CTkLabel(self.configFrame, text="Interpolation configuration")
+        self.interpLabel.grid(row=3, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.modeInter = ctk.CTkOptionMenu(self.configFrame, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'])
+        self.modeInter.grid(row=3, column=2, padx=5, pady=5)
 
+        # filter configuration
+        self.filterLabel = ctk.CTkLabel(self.configFrame, text="Filter configuration")
+        self.filterLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.modeSelect = ctk.CTkOptionMenu(self.configFrame, values=["SGV"], state="readonly")
+        self.modeSelect.grid(row=4, column=2, padx=5, pady=5)
+
+
+
+
+
+    def checkparams(self):
+        """
+        Check the parameters of the configuration before starting the process
+        """
+
+        
 
     def switch_behaviour(self):
         """
@@ -1066,17 +1091,20 @@ class NewProcessWin(ctk.CTkFrame):
             self.stackEntry.configure(placeholder_text="Stack name")
             self.indexSelect.set("NDVI")
             self.indexSensor.set("Modis")
+            self.nextbutton.configure(state="normal")
         elif self.procesedSwitch.get() == True:
             self.infilesButton.configure(state="normal")
             self.rawSwitch.configure(state="disabled")
             self.stackSwitch.configure(state="disabled")
             self.stackEntry.configure(state="normal")
             self.stackEntry.configure(placeholder_text="Stack name")
+            self.nextbutton.configure(state="normal")
 
         elif self.stackSwitch.get() == True:
             self.infilesButton.configure(state="normal")
             self.rawSwitch.configure(state="disabled")
             self.procesedSwitch.configure(state="disabled")
+            self.nextbutton.configure(state="normal")
             
         else:
             self.rawSwitch.configure(state="normal")
@@ -1089,6 +1117,7 @@ class NewProcessWin(ctk.CTkFrame):
             self.indexSensor.configure(state="disabled")
             self.stackEntry.configure(placeholder_text="")
             self.stackEntry.configure(state="disabled")
+            self.nextbutton.configure(state="disabled")
             
     
     def selectFiles(self):
@@ -1147,6 +1176,11 @@ class NewProcessWin(ctk.CTkFrame):
         """
         self.createtoplevel()
 
+    def cancel(self):
+        """
+        Cancel the process
+        """
+        self.toplevel.destroy()
 
     def back(self):
         """
