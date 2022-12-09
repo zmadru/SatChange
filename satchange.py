@@ -1035,7 +1035,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.backbutton = ctk.CTkButton(self.configFrame, text="Cancel", command=self.cancel)
         self.backbutton.grid(row=5, column=0, padx=5, pady=5)
 
-        # TODO add the widgets to select the index and the sensor
+        # select the index and the sensor 
         self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
         self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=["NDVI"])
