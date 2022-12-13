@@ -206,7 +206,7 @@ class IndexWindow(ctk.CTkFrame):
         super().__init__(master)
         self.master = master
         self.grid_rowconfigure((0,4), weight=7)
-        self.grid_columnconfigure((0,4), weight=3)
+        self.grid_columnconfigure((0,1,2,3), weight=3)
         self.create_widgets()
 
     def create_widgets(self):
@@ -750,7 +750,7 @@ class IndexesWindow(ctk.CTkFrame):
         """
         self.labelSelect = ctk.CTkLabel(self, text="Select the mode ->")
         self.labelSelect.grid(row=3, column=0, padx=5, pady=5)
-        self.modeSelect = ctk.CTkOptionMenu(self, values=["NDVI"])
+        self.modeSelect = ctk.CTkOptionMenu(self, values=indexes.indexes)
         self.modeSelect.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
         self.modeSelect.set("NDVI")
         self.sensor = ctk.CTkOptionMenu(self, values=["Modis", "Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "AVHRR"])
@@ -977,7 +977,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.grid_rowconfigure((0,5), weight=3)
         self.grid_columnconfigure((0,4), weight=5)
         self.create_widgets()
-        
+        self.infiles = list()
 
     def createtoplevel(self):
         """
@@ -1038,7 +1038,7 @@ class NewProcessWin(ctk.CTkFrame):
         # select the index and the sensor 
         self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
         self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=["NDVI"])
+        self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=indexes.indexes)
         self.indexSelect.configure(state="disabled")
         self.indexSelect.grid(row=1, column=2, padx=5, pady=5)
         self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=["Modis", "Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "AVHRR"])
@@ -1073,6 +1073,11 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Check the parameters of the configuration before starting the process
         """
+        if (self.rawSwitch.get() or self.procesedSwitch.get() or self.stackSwitch.get() ) and len(self.infiles) == 0:
+            showerror("Error", "No input selected")
+        
+                
+            
 
         
 
@@ -1102,6 +1107,7 @@ class NewProcessWin(ctk.CTkFrame):
 
         elif self.stackSwitch.get() == True:
             self.infilesButton.configure(state="normal")
+            self.infilesButton.configure(text="Select stack")
             self.rawSwitch.configure(state="disabled")
             self.procesedSwitch.configure(state="disabled")
             self.nextbutton.configure(state="normal")
@@ -1118,6 +1124,7 @@ class NewProcessWin(ctk.CTkFrame):
             self.stackEntry.configure(placeholder_text="")
             self.stackEntry.configure(state="disabled")
             self.nextbutton.configure(state="disabled")
+            self.infilesButton.configure(text="Select input files")
             
     
     def selectFiles(self):
