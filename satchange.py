@@ -976,7 +976,7 @@ class NewProcessWin(ctk.CTkFrame):
         super().__init__(master)
         self.master = master
         self.grid_rowconfigure((0,1,2,3), weight=3)
-        self.grid_columnconfigure((0,4), weight=5)
+        self.grid_columnconfigure((0,1,2,3,4), weight=5)
         self.create_widgets()
         self.infiles = list()
         self.outdir = ""
@@ -1200,13 +1200,13 @@ class NewProcessWin(ctk.CTkFrame):
         self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
         self.infolabel.insert("0.0","Completed processess:")
         self.infolabel.configure(state="disabled")
-        self.infolabel.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.infolabel.grid(row=1, column=0, columnspan=2, rowspan=2, sticky="ew")
         self.processlabel = ctk.CTkEntry(self, font=("Helvetica",16), state="disabled")
-        self.processlabel.grid(row=0, column=3, columnspan=2, sticky="ew")
+        self.processlabel.grid(row=1, column=2, columnspan=2, sticky="ew", padx=10, pady=10)
         self.abortBtn = ctk.CTkButton(self, text="Abort", command=self.abort)
-        self.abortBtn.grid(row=1, column=3, padx=10, pady=10)
+        self.abortBtn.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
         self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
-        self.pb.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        self.pb.grid(row=3, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
         self.percentagelabel = ctk.CTkLabel(self, text="0%")
         self.percentagelabel.grid(row=3, column=0, padx=10, pady=10)
         
