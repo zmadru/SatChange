@@ -17,6 +17,7 @@ from osgeo import osr
 progress:int = 0
 out_file = None
 saving:bool = False
+start:bool = False
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -95,11 +96,14 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):##
 def s(x, meanx, n):##
     return np.sqrt(np.sum(np.power(x, 2)) / n - meanx**2)
 
-def r(x, y, n):##
+def r(x, y):##
     # meanx, meany = np.mean(x), np.mean(y)
-    return np.cov(x, y)/(np.std(x)*np.std(y))
+    # return ((np.sum(x * y) / len(x)) - (np.mean(x) * np.mean(y))) / (np.std(x)*np.std(y))
     # return ((np.sum(x * y) / n) - (meanx * meany)) / (s(x, meanx, n) * s(y, meany, n))
+    return np.corrcoef(x, y)[0, 1]
 
+def rmse(x, y):##
+    return np.sqrt(np.mean(np.power(x - y, 2)))
 
 # Main
 def getFiltRaster(path:str, window_size:int, polyorder:int):
@@ -111,7 +115,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
         window_size (int): Window size
         polyorder (int): Polynomial order
     """
-    global progress, out_file, saving
+    global progress, out_file, saving, start
     progress = 0
     saving = False
 
@@ -131,11 +135,12 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     pearson = np.zeros((height, width))##
     # Run by depth
     
+    start = True
     for i in range(height):
         for j in range(width):
             aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
-            rmse[i, j] = int(10000*np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth))##
-            pearson[i, j] = r(img[i, j, :], aux[i, j, :], depth)     ##   
+            rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
+            pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
             progress = int((i * width + j) / (height * width) * 100)
     progress = 100
 
@@ -147,7 +152,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     saveBand(dst, rt, aux)
     dst = f'{name}_SGrmse_{ext}'
     print("Saving in ", dst)
-    saveSingleBand(dst, rt, rmse)##
+    saveSingleBand(dst, rt, rmse, tt=gdal.GDT_Float32)##
     dst = f'{name}_SGpearson_{ext}'
     print("Saving in ", dst)
     saveSingleBand(dst, rt, pearson, tt=gdal.GDT_Float32)##

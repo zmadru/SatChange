@@ -5,10 +5,10 @@ import customtkinter as ctk
 from tkinter import ttk, filedialog
 from tkinter import *
 import os
-from tkinter.messagebox import showerror, showinfo
+from tkinter.messagebox import askyesno, showerror, showinfo
 import lib.stackIntFiles as stackInt
 import lib.interpolacion as interpolacion
-import lib.filtro_SGV1 as filtro_SGV1
+import lib.filtro_SGV1 as filtro
 import lib.indexes as indexes
 import lib.ACF as ACF
 from threading import Thread
@@ -120,9 +120,6 @@ class App(ctk.CTk):
         textbox.configure(state="disabled")
         sys.stderr = error
 
-
-
-        
 
     def unpackAll(self):
         self.indwin.pack_forget()
@@ -637,24 +634,28 @@ class FilterWindow(ctk.CTkFrame):
         if self.file == "":
             showerror("Error", "You must select a file")
         else:
-            self.thd = Thread(target=filtro_SGV1.getFiltRaster, args=(self.file, 3, 2))
+            self.thd = Thread(target=filtro.getFiltRaster, args=(self.file, 3, 2))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.percentajeLabel = ctk.CTkLabel(self, justify="right", text="0%")
             self.startBtn.configure(state='disabled')
             self.backBtn.configure(state='disabled')
             self.pb.grid(row=4, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
-            self.percentajeLabel.grid(row=4, column=0, padx=5, pady=5, columnspan=2, sticky="ew")
+            self.percentajeLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
             self.pb.start()
 
-            while filtro_SGV1.progress < 100:
-                self.percentajeLabel.configure(text=str(filtro_SGV1.progress).split(".")[0]+"%")
+            while not filtro.start:
+                self.update()
+                self.master.update()
+
+            while filtro.progress < 100:
+                self.percentajeLabel.configure(text=str(filtro.progress).split(".")[0]+"%")
                 self.update()
             
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()            
 
-            while(filtro_SGV1.saving):
+            while(filtro.saving):
                 self.update()
                 self.master.update()
             
@@ -667,9 +668,9 @@ class FilterWindow(ctk.CTkFrame):
             self.backBtn.configure(state='normal')
             
             if self.solo:
-                showinfo("Satchange", "The process has finished, "+filtro_SGV1.out_file+" has been created")
+                showinfo("Satchange", "The process has finished, "+filtro.out_file+" has been created")
             else:
-                dir_out = filtro_SGV1.out_file   
+                dir_out = filtro.out_file   
 
 
     def run(self):
@@ -974,10 +975,11 @@ class NewProcessWin(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure((0,5), weight=3)
+        self.grid_rowconfigure((0,1,2,3), weight=3)
         self.grid_columnconfigure((0,4), weight=5)
         self.create_widgets()
         self.infiles = list()
+        self.outdir = ""
 
     def createtoplevel(self):
         """
@@ -993,7 +995,7 @@ class NewProcessWin(ctk.CTkFrame):
         # two frames, one for the input images and other for the configuration options
         self.inputFrame = ctk.CTkFrame(self.toplevel)
         self.inputFrame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew", rowspan=2)
-        self.inputFrame.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.inputFrame.grid_rowconfigure((0,1,2,3,4,5,6), weight=1)
         self.inputFrame.grid_columnconfigure((0), weight=1)
         self.create_inputwidgets()
 
@@ -1012,16 +1014,18 @@ class NewProcessWin(ctk.CTkFrame):
 
         self.infilesButton = ctk.CTkButton(self.inputFrame, text="Select input files", state="disabled", command=self.selectFiles)
         self.infilesButton.grid(row=1, column=0, padx=5, pady=5)
+        self.outdirButton = ctk.CTkButton(self.inputFrame, text="Select output directory", state="disabled", command=self.selectDir)
+        self.outdirButton.grid(row=2, column=0, padx=5, pady=5)
         self.rawSwitch = ctk.CTkSwitch(self.inputFrame, text="Raw images", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.rawSwitch.grid(row=2, column=0, padx=15, pady=5, sticky="w")
+        self.rawSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
         self.procesedSwitch = ctk.CTkSwitch(self.inputFrame, text="Processed images", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.procesedSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
+        self.procesedSwitch.grid(row=4, column=0, padx=15, pady=5, sticky="w")
         self.stackSwitch = ctk.CTkSwitch(self.inputFrame, text="Stack image", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.stackSwitch.grid(row=4, column=0, padx=15, pady=5, sticky="w")
+        self.stackSwitch.grid(row=5, column=0, padx=15, pady=5, sticky="w")
         self.nfilesLabel = ctk.CTkEntry(self.inputFrame)
         self.nfilesLabel.insert(0, "0 files selected")
         self.nfilesLabel.configure(state="disabled")
-        self.nfilesLabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew")
+        self.nfilesLabel.grid(row=6, column=0, padx=5, pady=5, sticky="ew")
 
         
     def create_configwidgets(self):
@@ -1070,8 +1074,16 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Check the parameters of the configuration before starting the process
         """
-        if (self.rawSwitch.get() or self.procesedSwitch.get() or self.stackSwitch.get() ) and len(self.infiles) == 0:
+        if (self.rawSwitch.get() or self.procesedSwitch.get() or self.stackSwitch.get()) and len(self.infiles) == 0:
             showerror("Error", "No input selected")
+        elif (self.rawSwitch.get() or self.procesedSwitch.get()) and self.stackEntry.get() == "":
+            showerror("Error", "No stack name selected")
+        elif self.outdir == "":
+            showerror("Error", "No output directory selected")
+        else:
+            # ask for confirmation before starting the process
+            if askyesno("Confirmation", "Are you sure you want to start the process?"):
+                self.startprocess()
         
 
     def switch_behaviour(self):
@@ -1139,6 +1151,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.nfilesLabel.delete(0, "end")
         self.nfilesLabel.insert(0, text)
         self.nfilesLabel.configure(state="disabled")
+
+    def selectDir(self):
+        """
+        Select the output directory
+        """
+        self.outdir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
         
     def create_widgets(self):
         """
@@ -1170,6 +1188,157 @@ class NewProcessWin(ctk.CTkFrame):
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
         self.backBtn.grid(row=4, column=3, padx=10, pady=10)
 
+    def startprocess(self):
+        """
+        Start the complete process
+        """
+        self.toplevel.destroy()
+        self.infolabel.grid_forget()
+        self.startBtn.grid_forget()
+        self.backBtn.grid_forget()
+
+        self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
+        self.infolabel.insert("0.0","Completed processess:")
+        self.infolabel.configure(state="disabled")
+        self.infolabel.grid(row=1, column=0, columnspan=3, sticky="ew")
+        self.abortBtn = ctk.CTkButton(self, text="Abort", command=self.abort)
+        self.abortBtn.grid(row=4, column=1, padx=10, pady=10)
+        self.pb = ttk.Progressbar(self, orient="horizontal", mode="indeterminate")
+        self.pb.grid(row=3, column=1, columnspan=2, padx=10, pady=10)
+        self.percentagelabel = ctk.CTkLabel(self, text="0%")
+        self.percentagelabel.grid(row=3, column=0, padx=10, pady=10)
+        
+        self.pb.start()
+        if self.rawSwitch.get() == True:
+            # 1 - Calculate indexes
+            self.indexes()
+            # 2 - Calculate the stack
+            self.stack()
+            # 3 - Interpolate the stack
+            self.interpolate()
+            # 4 - Filter the stack interpolated
+            self.filter()
+            # 5 - Calculate the autocorrelation
+            self.autocorrelation()
+        elif self.procesedSwitch.get() == True:
+            # 1 - Calculate the stack
+            self.stack(index="1.0")
+            # 2 - Interpolate the stack
+            self.interpolate(index="2.0")
+            # 3 - Filter the stack interpolated
+            self.filter(index="3.0")
+            # 4 - Calculate the autocorrelation
+            self.autocorrelation(index="4.0")
+        elif self.stackSwitch.get() == True:
+            # 1 - Interpolate the stack
+            self.interpolate(index="1.0")
+            # 2 - Filter the stack interpolated
+            self.filter(index="2.0")
+            # 3 - Calculate the autocorrelation
+            self.autocorrelation(index="3.0")
+            
+
+    def indexes(self):
+        thread = Thread(target=indexes.calculateIndex, args=(self.indexSelect.get(), self.infiles, self.outdir, self.indexSensor.get()))
+        thread.start()
+        while indexes.progress < 100:
+            self.percentagelabel.configure(text=str((indexes.progress/len(self.infiles))*100).split('.')[0] + "%")
+            self.update()
+            
+        if thread.is_alive():
+            thread.join()
+            
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert("1.0", "Indexes calculated")
+        self.infolabel.configure(state="disabled")
+
+    def stack(self, index="2.0"):
+        thread = Thread(target=stackInt.stack, args=(self.infiles, self.outdir,self.stackEntry.get()))
+        thread.start()
+        while stackInt.start == False:
+            self.update()
+            
+        while stackInt.progress < 100:
+            self.percentagelabel.configure(text=str((stackInt.progress/len(self.infiles))*100).split('.')[0] + "%")
+            self.update()
+            
+        self.percentagelabel.configure(text="Saving stack...")
+        self.percentagelabel.update()
+        while stackInt.saving == True:
+            self.update()
+            
+        if thread.is_alive():
+            thread.join()
+
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert(index, "Stack calculated")
+        self.infolabel.configure(state="disabled")
+
+    def interpolate(self, index="3.0"):
+        thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
+        thread.start()
+
+        while interpolacion.progress < 100:
+            self.percentagelabel.configure(text=str(interpolacion.progress).split('.')[0] + "%")
+            self.update()
+            
+        self.percentagelabel.configure(text="Saving interpolated stack...")
+        self.percentagelabel.update()
+        while interpolacion.saving == True:
+            self.update()
+
+        if thread.is_alive():
+            thread.join()
+            
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert(index, "Stack interpolated")
+        self.infolabel.configure(state="disabled")
+    
+    def filter(self, index="4.0"):
+        thread = Thread(target=filtro.getFiltRaster, args=(interpolacion.out_file, 3, 2))
+        thread.start()
+
+        while not filtro.start:
+            self.update()
+            self.master.update()
+            
+        while filtro.progress < 100:
+            self.percentagelabel.configure(text=str(filtro.progress).split('.')[0] + "%")
+            self.update()
+            
+        self.percentagelabel.configure(text="Saving filtered stack...")
+        self.percentagelabel.update()
+        while filtro.saving == True:
+            self.update()
+            
+        if thread.is_alive():
+           thread.join()
+            
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert(index, "Stack filtered")
+        self.infolabel.configure(state="disabled")
+
+    def autocorrelation(self, index="5.0"):
+        thread = Thread(target=ACF.ACFtif, args=(filtro.out_file))
+        thread.start()
+
+        while ACF.progress < 100:
+            self.percentagelabel.configure(text=str(ACF.progress).split('.')[0] + "%")
+            self.update()
+            
+        self.percentagelabel.configure(text="Saving autocorrelation...")
+        self.percentagelabel.update()
+        while ACF.saving == True:
+            self.update()
+            
+        if thread.is_alive():
+            thread.join()
+            
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert(index, "Autocorrelation calculated")
+        self.infolabel.configure(state="disabled")
+
+
     def run(self):
         """
         Run the logic of the entire process
@@ -1181,6 +1350,13 @@ class NewProcessWin(ctk.CTkFrame):
         Cancel the process
         """
         self.toplevel.destroy()
+    
+    def abort(self):
+        """
+        Abort the process
+        """
+        if askyesno("Abort", "Are you sure you want to abort the process?"):
+            self.master.destroy()
 
     def back(self):
         """

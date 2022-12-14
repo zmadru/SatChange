@@ -107,14 +107,15 @@ def __readDir(in_files: list) -> None:
         
 def stack(in_files: list, dir_out: str, out_name: str):
     """
+    # Stack
     Creates a stack with the input files, and saves the stack with the [out_name] on the [dir_out]
 
-    Args:
+    ## Args:
         in_files (list): Input files
         dir_out (str): Output directory
         out_name (str): Output filename
 
-    Returns:
+    ## Returns:
         str: The output file path
     """
     global outdata, total, out_file, saving

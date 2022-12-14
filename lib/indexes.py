@@ -11,7 +11,9 @@ from osgeo import gdal
 progress = 0
 start = False
 indexes = ["NDVI", "NBR"]
-sensors = ["Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "Modis", "AVHRR"]
+sensors = ["Modis", "AVHRR"]
+# sensors = ["Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "Modis", "AVHRR"]
+processed = []
 
 def calculateIndex(index:str, files:list, out_dir:str, sensor:str):
     """
@@ -44,7 +46,8 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
     Returns:
         error (int): 0 okay, -1 error
     """
-    global progress, start
+    global progress, start, processed
+    processed = []
     progress = 0
     start = True
 
@@ -75,6 +78,8 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         driver = gdal.GetDriverByName("GTiff")
         # Create the output file
         ndviFile = driver.Create(f"{out_dir}/{name}_NDVI.tif", src_file.RasterXSize, src_file.RasterYSize, 1, gdal.GDT_Float32)
+        # add the name to the list of processed files
+        processed.append(f"{out_dir}/{name}_NDVI.tif")
         ndviFile.GetRasterBand(1).WriteArray(ndvi)  # Write the array to the file
         ndviFile.SetGeoTransform(src_file.GetGeoTransform())  # Set the GeoTransform
         ndviFile.SetProjection(src_file.GetProjection())  # Set the Projection
@@ -96,7 +101,8 @@ def nbr(files:list, out_dir:str, sensor:str) -> int:
     Returns:
         error (int): 0 okay, -1 error
     """
-    global progress, start
+    global progress, start, processed
+    processed = []
     progress = 0
     start = True
 
@@ -126,6 +132,8 @@ def nbr(files:list, out_dir:str, sensor:str) -> int:
         driver = gdal.GetDriverByName("GTiff")
         # Create the output file
         nbrFile = driver.Create(f"{out_dir}/{name}_NBR.tif", src_file.RasterXSize, src_file.RasterYSize, 1, gdal.GDT_Float32)
+        # add the name to the list of processed files
+        processed.append(f"{out_dir}/{name}_NBR.tif")
         nbrFile.GetRasterBand(1).WriteArray(nbr)  # Write the array to the file
         nbrFile.SetGeoTransform(src_file.GetGeoTransform())  # Set the GeoTransform
         nbrFile.SetProjection(src_file.GetProjection())  # Set the Projection
