@@ -432,7 +432,7 @@ class InterpolationWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure((0,4), weight=5)
+        self.grid_rowconfigure((0,1,2,3,4), weight=5)
         self.grid_columnconfigure((0,3), weight=3)
         self.solo = solo
         self.create_widgets()
@@ -567,7 +567,7 @@ class FilterWindow(ctk.CTkFrame):
         """
         super().__init__(master)
         self.master = master
-        self.grid_rowconfigure((0,4), weight=4)
+        self.grid_rowconfigure((0,1,2,3,4), weight=4)
         self.grid_columnconfigure((0,3), weight=2)
         self.solo = solo
         self.create_widgets()
@@ -643,8 +643,8 @@ class FilterWindow(ctk.CTkFrame):
             self.percentajeLabel = ctk.CTkLabel(self, justify="right", text="0%")
             self.startBtn.configure(state='disabled')
             self.backBtn.configure(state='disabled')
-            self.pb.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
-            self.percentajeLabel.grid(row=2, column=0, padx=10, pady=10)
+            self.pb.grid(row=4, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
+            self.percentajeLabel.grid(row=4, column=0, padx=5, pady=5, columnspan=2, sticky="ew")
             self.pb.start()
 
             while filtro_SGV1.progress < 100:
@@ -1066,19 +1066,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.modeSelect.grid(row=4, column=2, padx=5, pady=5)
 
 
-
-
-
     def checkparams(self):
         """
         Check the parameters of the configuration before starting the process
         """
         if (self.rawSwitch.get() or self.procesedSwitch.get() or self.stackSwitch.get() ) and len(self.infiles) == 0:
             showerror("Error", "No input selected")
-        
-                
-            
-
         
 
     def switch_behaviour(self):
