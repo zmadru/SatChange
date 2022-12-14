@@ -753,7 +753,7 @@ class IndexesWindow(ctk.CTkFrame):
         self.modeSelect = ctk.CTkOptionMenu(self, values=indexes.indexes)
         self.modeSelect.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
         self.modeSelect.set("NDVI")
-        self.sensor = ctk.CTkOptionMenu(self, values=["Modis", "Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "AVHRR"])
+        self.sensor = ctk.CTkOptionMenu(self, values=indexes.sensors)
         self.sensor.grid(row=3, column=2, padx=10, pady=10, sticky="ew")
         self.sensor.set("Modis")
 
@@ -1041,7 +1041,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=indexes.indexes)
         self.indexSelect.configure(state="disabled")
         self.indexSelect.grid(row=1, column=2, padx=5, pady=5)
-        self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=["Modis", "Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "AVHRR"])
+        self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=indexes.sensors)
         self.indexSensor.configure(state="disabled")
         self.indexSensor.grid(row=1, column=3, padx=5, pady=5)
 

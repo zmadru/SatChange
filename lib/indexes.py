@@ -11,6 +11,7 @@ from osgeo import gdal
 progress = 0
 start = False
 indexes = ["NDVI", "NBR"]
+sensors = ["Sentinel 2 (10m)", "Sentinel 2 (20m)", "Sentinel 2 (60m)", "Modis", "AVHRR"]
 
 def calculateIndex(index:str, files:list, out_dir:str, sensor:str):
     """
