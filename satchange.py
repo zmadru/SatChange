@@ -1192,7 +1192,7 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Start the complete process
         """
-        self.toplevel.destroy()
+        self.toplevel.withdraw()
         self.infolabel.grid_forget()
         self.startBtn.grid_forget()
         self.backBtn.grid_forget()
@@ -1200,10 +1200,10 @@ class NewProcessWin(ctk.CTkFrame):
         self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
         self.infolabel.insert("0.0","Completed processess:")
         self.infolabel.configure(state="disabled")
-        self.infolabel.grid(row=1, column=0, columnspan=4, sticky="ew")
+        self.infolabel.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.abortBtn = ctk.CTkButton(self, text="Abort", command=self.abort)
-        self.abortBtn.grid(row=4, column=1, padx=10, pady=10)
-        self.pb = ctk.CTkProgressBar(self, orient="horizontal", mode="indeterminate")
+        self.abortBtn.grid(row=1, column=3, padx=10, pady=10)
+        self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
         self.pb.grid(row=3, column=1, columnspan=2, padx=10, pady=10)
         self.percentagelabel = ctk.CTkLabel(self, text="0%")
         self.percentagelabel.grid(row=3, column=0, padx=10, pady=10)
@@ -1263,7 +1263,7 @@ class NewProcessWin(ctk.CTkFrame):
         while stackInt.start == False:
             self.update()
             
-        while stackInt.progress < 100:
+        while stackInt.progress/len(self.infiles)*100 < 100:
             self.percentagelabel.configure(text=str((stackInt.progress/len(self.infiles))*100).split('.')[0] + "%")
             self.update()
             if not thread.is_alive():
