@@ -1201,10 +1201,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.infolabel.insert("0.0","Completed processess:")
         self.infolabel.configure(state="disabled")
         self.infolabel.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.processlabel = ctk.CTkEntry(self, font=("Helvetica",16), state="disabled")
+        self.processlabel.grid(row=0, column=3, columnspan=2, sticky="ew")
         self.abortBtn = ctk.CTkButton(self, text="Abort", command=self.abort)
         self.abortBtn.grid(row=1, column=3, padx=10, pady=10)
         self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
-        self.pb.grid(row=3, column=1, columnspan=2, padx=10, pady=10)
+        self.pb.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
         self.percentagelabel = ctk.CTkLabel(self, text="0%")
         self.percentagelabel.grid(row=3, column=0, padx=10, pady=10)
         
@@ -1239,6 +1241,11 @@ class NewProcessWin(ctk.CTkFrame):
             
 
     def indexes(self):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Calculating indexes")
+        self.processlabel.configure(state="disabled")
+
         thread = Thread(target=indexes.calculateIndex, args=(self.indexSelect.get(), self.infiles, self.outdir, self.indexSensor.get()))
         thread.start()
         while indexes.progress < 100:
@@ -1253,10 +1260,16 @@ class NewProcessWin(ctk.CTkFrame):
             thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert("1.0", "Indexes calculated")
+        self.infolabel.insert("end", "\nIndexes calculated")
         self.infolabel.configure(state="disabled")
 
+
     def stack(self, index="2.0"):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Stacking")
+        self.processlabel.configure(state="disabled")
+
         name = self.stackEntry.get()
         thread = Thread(target=stackInt.stack, args=(self.infiles, self.outdir, name))
         thread.start()
@@ -1271,7 +1284,7 @@ class NewProcessWin(ctk.CTkFrame):
                 self.back()
                 break
             
-        self.percentagelabel.configure(text="Saving stack...")
+        self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
         while stackInt.saving == True:
             self.update()
@@ -1280,10 +1293,16 @@ class NewProcessWin(ctk.CTkFrame):
             thread.join()
 
         self.infolabel.configure(state="normal")
-        self.infolabel.insert(index, "Stack calculated")
+        self.infolabel.insert("end", "\nStack calculated")
         self.infolabel.configure(state="disabled")
 
+
     def interpolate(self, index="3.0"):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Interpolating")
+        self.processlabel.configure(state="disabled")
+
         thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
         thread.start()
 
@@ -1291,7 +1310,7 @@ class NewProcessWin(ctk.CTkFrame):
             self.percentagelabel.configure(text=str(interpolacion.progress).split('.')[0] + "%")
             self.update()
             
-        self.percentagelabel.configure(text="Saving interpolated stack...")
+        self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
         while interpolacion.saving == True:
             self.update()
@@ -1304,10 +1323,15 @@ class NewProcessWin(ctk.CTkFrame):
             thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert(index, "Stack interpolated")
+        self.infolabel.insert("end", "\nStack interpolated")
         self.infolabel.configure(state="disabled")
     
     def filter(self, index="4.0"):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Filtering")
+        self.processlabel.configure(state="disabled")
+
         thread = Thread(target=filtro.getFiltRaster, args=(interpolacion.out_file, 3, 2))
         thread.start()
 
@@ -1323,7 +1347,7 @@ class NewProcessWin(ctk.CTkFrame):
                 self.back()
                 break
 
-        self.percentagelabel.configure(text="Saving filtered stack...")
+        self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
         while filtro.saving == True:
             self.update()
@@ -1332,10 +1356,16 @@ class NewProcessWin(ctk.CTkFrame):
            thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert(index, "Stack filtered")
+        self.infolabel.insert("end", "\nStack filtered")
         self.infolabel.configure(state="disabled")
 
+
     def autocorrelation(self, index="5.0"):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Calculating autocorrelation")
+        self.processlabel.configure(state="disabled")
+
         thread = Thread(target=ACF.ACFtif, args=(filtro.out_file))
         thread.start()
 
@@ -1347,7 +1377,7 @@ class NewProcessWin(ctk.CTkFrame):
                 self.back()
                 break
             
-        self.percentagelabel.configure(text="Saving autocorrelation...")
+        self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
         while ACF.saving == True:
             self.update()
@@ -1356,7 +1386,7 @@ class NewProcessWin(ctk.CTkFrame):
             thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert(index, "Autocorrelation calculated")
+        self.infolabel.insert("end", "\nAutocorrelation calculated")
         self.infolabel.configure(state="disabled")
 
     def error(self):
