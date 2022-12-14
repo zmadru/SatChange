@@ -1014,7 +1014,7 @@ class NewProcessWin(ctk.CTkFrame):
 
         self.infilesButton = ctk.CTkButton(self.inputFrame, text="Select input files", state="disabled", command=self.selectFiles)
         self.infilesButton.grid(row=1, column=0, padx=5, pady=5)
-        self.outdirButton = ctk.CTkButton(self.inputFrame, text="Select output directory", state="disabled", command=self.selectDir)
+        self.outdirButton = ctk.CTkButton(self.inputFrame, text="Select output directory", command=self.selectDir)
         self.outdirButton.grid(row=2, column=0, padx=5, pady=5)
         self.rawSwitch = ctk.CTkSwitch(self.inputFrame, text="Raw images", command=self.switch_behaviour, onvalue=True, offvalue=False)
         self.rawSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
