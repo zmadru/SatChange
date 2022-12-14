@@ -1082,7 +1082,7 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "No output directory selected")
         else:
             # ask for confirmation before starting the process
-            if askyesno("Confirmation", "Are you sure you want to start the process?"):
+            if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
                 self.startprocess()
         
 
