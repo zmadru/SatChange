@@ -113,7 +113,7 @@ def ACFtif(path:str):
         for j in range(width):
             #print(pc.acf(img[i, j, :], nlags=nlags, alpha=0.05))
             aux[i, j, :] = pc.acf(img[i, j, :], nlags=nlags, alpha=0.05)[0]
-            aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
+            # aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
             progress = int((i*width+j)/(height*width)*100)
                         
     # Save
@@ -122,9 +122,9 @@ def ACFtif(path:str):
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
     out_file = dst
-    dst = f'{name}_PACF1_{ext}'
-    print("Saving in ", dst)
-    saveBand(dst, rt, aux2)
+    # dst = f'{name}_PACF1_{ext}'
+    # print("Saving in ", dst)
+    # saveBand(dst, rt, aux2)
     saving = False
     return aux
 
