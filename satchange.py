@@ -380,6 +380,10 @@ class StackWindow(ctk.CTkFrame):
             while stackInt.progress/stackInt.total*100 < 100:
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.update()
+                if not thd.is_alive():
+                    self.error()
+                    self.cancel()
+                    break
 
             self.pbLabel.configure(text=str("Saving..."))
             self.pbLabel.update()
@@ -402,6 +406,13 @@ class StackWindow(ctk.CTkFrame):
             self.buttonClose.configure(state="normal")
             self.pbLabel.destroy()
             self.pb.stop()
+
+    def error(self):
+        """
+        Display an error message
+        """
+        showerror("Error", "The process has failed, please check the input files and the log")
+        self.master.log()
             
     def cancel(self):
         self.master.index()
@@ -515,6 +526,10 @@ class InterpolationWindow(ctk.CTkFrame):
             while interpolacion.progress < 100:
                 self.percentajeLabel.configure(text=(str(interpolacion.progress).split(".")[0]+"%"))
                 self.update()
+                if not self.thd.is_alive():
+                    self.error()
+                    self.master.log()
+                    break
 
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
@@ -535,6 +550,13 @@ class InterpolationWindow(ctk.CTkFrame):
                 showinfo("Satchange", "The process has finished, "+interpolacion.out_file+" has been created")
             else:
                 dir_out = interpolacion.out_file
+
+    def error(self):
+        """
+        Show error message
+        """
+        showerror("Error", "The process has failed, check the log file")
+        self.back()
 
     def run(self):
         """
@@ -651,6 +673,10 @@ class FilterWindow(ctk.CTkFrame):
             while filtro.progress < 100:
                 self.percentajeLabel.configure(text=str(filtro.progress).split(".")[0]+"%")
                 self.update()
+                if not self.thd.is_alive():
+                    self.error()
+                    self.master.log()
+                    break
             
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()            
@@ -671,6 +697,13 @@ class FilterWindow(ctk.CTkFrame):
                 showinfo("Satchange", "The process has finished, "+filtro.out_file+" has been created")
             else:
                 dir_out = filtro.out_file   
+            
+    def error(self):
+        """
+        Show error message
+        """
+        showerror("Error", "The process has failed, check the log file")
+        self.back()
 
 
     def run(self):
@@ -808,6 +841,10 @@ class IndexesWindow(ctk.CTkFrame):
             while indexes.progress < 100:
                 self.pblabel.configure(text=str(indexes.progress).split(".")[0]+"%")
                 self.update()
+                if not self.thread.is_alive():
+                    self.error()
+                    self.master.log()
+                    break
             
             
             if self.thread.is_alive():
@@ -824,6 +861,14 @@ class IndexesWindow(ctk.CTkFrame):
                 dir_out = self.dir
         else:
             showerror("Error", "No input file selected")
+
+    def error(self):
+        """
+        Show error message
+        """
+        showerror("Error", "The process has failed, check the log file")
+        self.back()
+        
 
     def run(self):
         """
@@ -931,6 +976,10 @@ class AcWindow(ctk.CTkFrame):
                 self.percentajeLabel.configure(text=f"{ACF.progress}%")
                 self.percentajeLabel.update()
                 self.update()
+                if not self.thd.is_alive():
+                    self.error()
+                    self.master.log()
+                    break
 
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
@@ -945,7 +994,12 @@ class AcWindow(ctk.CTkFrame):
             self.percentajeLabel.destroy()
             showinfo("Satchange", f"File saved in {ACF.dir_out}")            
 
-
+    def error(self):
+        """
+        Show error message
+        """
+        showerror("Error", "The process has failed, check the log file")
+        self.back()
     
     def run(self):
         """

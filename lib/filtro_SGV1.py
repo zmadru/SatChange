@@ -15,7 +15,7 @@ from osgeo import osr
 
 # Global variables
 progress:int = 0
-out_file = None
+out_file:str = ""
 saving:bool = False
 start:bool = False
 
