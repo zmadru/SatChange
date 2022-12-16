@@ -15,4 +15,6 @@ Indices:
         -Sentinel 2 60m = b8a y b4
         -AVHRR = b2 y b1
 
+Anidar las entradas y salidas sin que tener que volver a abrir el archivo pasando la matriz solucion y sobreescribir la informacion de la misma
+
     

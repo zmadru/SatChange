@@ -1255,7 +1255,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.infolabel.insert("0.0","Completed processes:")
         self.infolabel.configure(state="disabled")
         self.infolabel.grid(row=1, column=0, columnspan=2, rowspan=2, sticky="ew")
-        self.processlabel = ctk.CTkEntry(self, font=("Helvetica",16), state="disabled")
+        self.processlabel = ctk.CTkEntry(self, font=("Helvetica",16), state="disabled", justify=CENTER)
         self.processlabel.grid(row=1, column=2, columnspan=2, sticky="ew", padx=10, pady=10)
         self.abortBtn = ctk.CTkButton(self, text="Abort", command=self.abort)
         self.abortBtn.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
@@ -1357,7 +1357,10 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Interpolating")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
+        if self.stackSwitch.get() == True:
+            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get()))
+        else:
+            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
         thread.start()
 
         while interpolacion.progress < 100:
