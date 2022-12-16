@@ -962,7 +962,7 @@ class AcWindow(ctk.CTkFrame):
         if self.file == "":
             showerror("Error", "No input file selected")
         else:
-            self.thd = Thread(target=ACF.ACFtif, args=(self.file))
+            self.thd = Thread(target=ACF.ACFtif(self.file))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
@@ -1252,7 +1252,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.backBtn.grid_forget()
 
         self.infolabel = ctk.CTkTextbox(self, font=("Helvetica",16))
-        self.infolabel.insert("0.0","Completed processess:")
+        self.infolabel.insert("0.0","Completed processes:")
         self.infolabel.configure(state="disabled")
         self.infolabel.grid(row=1, column=0, columnspan=2, rowspan=2, sticky="ew")
         self.processlabel = ctk.CTkEntry(self, font=("Helvetica",16), state="disabled")
@@ -1475,7 +1475,7 @@ class NewProcessWin(ctk.CTkFrame):
         
 if __name__ == "__main__":
     # redirect stderr to a file
-    sys.stderr = error
+    # sys.stderr = error
     # Initialize the main window
     app = App()
     app.mainloop()
