@@ -4,6 +4,7 @@
 #fecha: marzo 2022
 #version: V1. 
 
+import threading
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal
@@ -18,6 +19,9 @@ progress:int = 0
 out_file:str = ""
 saving:bool = False
 start:bool = False
+out_array:np.ndarray = None
+
+rt = None
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -32,14 +36,17 @@ def loadRasterImage(path):
         (boolean): Indicates that if there is an error
         (str): Indicates the associated error message
     """
+    global rt
     raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
     if raster_ds is None:
         return None, None, True, "The file cannot be opened."
     print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
     print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
     if raster_ds.RasterCount == 1:
+        rt = raster_ds
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
+        rt = raster_ds
         return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
     
 def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
@@ -157,7 +164,50 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     print("Saving in ", dst)
     saveSingleBand(dst, rt, pearson, tt=gdal.GDT_Float32)##
     saving = False
-    
+
+def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str):
+    """Generates a filtered array
+
+    Args:
+        array (np.ndarray): Matrix to be filtered
+        window_size (int): Window size
+        polyorder (int): Polynomial order
+        path (str): Path to save the filtered array
+    """
+    global progress, out_file, saving, start, out_array
+    progress = 0
+    saving = False
+    thread = threading.Thread(target=loadRasterImage, args=(path))
+    thread.start()
+
+    name, ext = os.path.splitext(path)
+
+    # Process
+    aux = np.zeros(array.shape)
+    rmse = np.zeros((array.shape[0], array.shape[1]))##
+    for i in range(array.shape[0]):
+        for j in range(array.shape[1]):
+            aux[i, j, :] = scipy.signal.savgol_filter(array[i, j, :], window_size, polyorder, deriv=0)
+            rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/array.shape[2])##
+            progress = int((i * array.shape[1] + j) / (array.shape[0] * array.shape[1]) * 100)
+
+    progress = 100
+
+    # Save
+    saving = True   
+    dst = f'{name}_SG_{ext}'
+    out_file = dst
+    out_array = aux
+
+    if thread.is_alive():
+        thread.join()
+        
+    print("Saving in ", dst)
+    saveBand(dst, rt, aux)
+    dst = f'{name}_SGrmse_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, rmse, tt=gdal.GDT_Float32)##
+
 
    
 def main():

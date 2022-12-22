@@ -1389,7 +1389,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Filtering")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=filtro.getFiltRaster, args=(interpolacion.out_file, 3, 2))
+        thread = Thread(target=filtro.getFilter, args=(interpolacion.array, 3, 2, interpolacion.out_file))
         thread.start()
 
         while not filtro.start:
@@ -1423,7 +1423,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating autocorrelation")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=ACF.ACFtif, args=(filtro.out_file))
+        thread = Thread(target=ACF.AC, args=(filtro.out_array, filtro.out_file))
         thread.start()
 
         while ACF.progress < 100:

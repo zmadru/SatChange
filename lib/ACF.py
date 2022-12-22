@@ -1,4 +1,5 @@
 import os, sys
+import threading
 from osgeo import gdal
 from osgeo import osr
 #import gdal, osr
@@ -14,6 +15,9 @@ import statsmodels.tsa.stattools as pc
 progress:int = 0
 out_file = None
 saving:bool = False
+out_array:np.ndarray = None
+
+rt = None
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -28,14 +32,17 @@ def loadRasterImage(path):
         (boolean): Indicates that if there is an error
         (str): Indicates the associated error message
     """
+    global rt
     raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
     if raster_ds is None:
         return None, None, True, "The file cannot be opened."
     print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
     print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
     if raster_ds.RasterCount == 1:
+        rt = raster_ds
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
+        rt = raster_ds
         return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
      
 def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
@@ -127,6 +134,37 @@ def ACFtif(path:str):
     # saveBand(dst, rt, aux2)
     saving = False
     return aux
+
+def AC(array:np.ndarray, path:str, nlags:int=364):
+
+    global progress, out_file, saving, out_array
+    progress = 0
+    saving = False
+
+    # Read raster
+    name, ext = os.path.splitext(path)
+    thread = threading.Thread(target=loadRasterImage, args=(path))
+    thread.start()
+
+    # Process
+    height, width, depth = array.shape
+    aux = np.zeros((height, width, nlags+1))
+    for i in range(height):
+        for j in range(width):
+            aux[i, j, :] = pc.acf(array[i, j, :], nlags=nlags, alpha=0.05)[0]
+            progress = int((i*width+j)/(height*width)*100)
+    
+    saving = True
+    if thread.is_alive():
+        thread.join()
+    out_array = aux
+    out_file = f'{name}_ACF1_{ext}'
+    print("Saving in ", out_file)
+    saveBand(out_file, rt, aux)
+    saving = False
+
+
+
 
 if __name__ == "__main__":
     path = r'S:\30TUK\Series\T30TUK_NDVI_2016_2021_CLIP2_int_filt_linear__whitf_'

@@ -13,6 +13,7 @@ from osgeo import osr
 progress:int = 0
 out_file = None
 saving:bool = False
+array:np.ndarray = None
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -94,7 +95,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
         path (str): Path to raster image
         modeInterp (str, optional): Interpolation mode. Defaults to None.
     """
-    global progress, out_file
+    global progress, out_file, array
 
     name, ext = os.path.splitext(path)
     # Read raster
@@ -123,6 +124,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # Save
     dst = f'{name}_filt_{modeInterp}_{ext}'
     out_file = dst
+    array = aux.astype(np.int16)
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
 
