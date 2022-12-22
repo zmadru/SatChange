@@ -122,7 +122,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
         window_size (int): Window size
         polyorder (int): Polynomial order
     """
-    global progress, out_file, saving, start
+    global progress, out_file, saving, start, rt
     progress = 0
     saving = False
 
@@ -165,7 +165,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     saveSingleBand(dst, rt, pearson, tt=gdal.GDT_Float32)##
     saving = False
 
-def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str):
+def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str, raster):
     """Generates a filtered array
 
     Args:
@@ -174,15 +174,14 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str):
         polyorder (int): Polynomial order
         path (str): Path to save the filtered array
     """
-    global progress, out_file, saving, start, out_array
+    global progress, out_file, saving, start, out_array, rt
     progress = 0
     saving = False
-    thread = threading.Thread(target=loadRasterImage, args=(path))
-    thread.start()
 
     name, ext = os.path.splitext(path)
 
     # Process
+    start = True
     aux = np.zeros(array.shape)
     rmse = np.zeros((array.shape[0], array.shape[1]))##
     for i in range(array.shape[0]):
@@ -198,15 +197,12 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str):
     dst = f'{name}_SG_{ext}'
     out_file = dst
     out_array = aux
-
-    if thread.is_alive():
-        thread.join()
-        
     print("Saving in ", dst)
-    saveBand(dst, rt, aux)
+    saveBand(dst, raster, aux)
     dst = f'{name}_SGrmse_{ext}'
     print("Saving in ", dst)
-    saveSingleBand(dst, rt, rmse, tt=gdal.GDT_Float32)##
+    saveSingleBand(dst, raster, rmse, tt=gdal.GDT_Float32)##
+    rt = raster
 
 
    

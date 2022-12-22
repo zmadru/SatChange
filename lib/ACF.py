@@ -135,16 +135,14 @@ def ACFtif(path:str):
     saving = False
     return aux
 
-def AC(array:np.ndarray, path:str, nlags:int=364):
+def AC(array:np.ndarray, path:str, raster, nlags:int=364):
 
-    global progress, out_file, saving, out_array
+    global progress, out_file, saving, out_array, rt
     progress = 0
     saving = False
 
     # Read raster
     name, ext = os.path.splitext(path)
-    thread = threading.Thread(target=loadRasterImage, args=(path))
-    thread.start()
 
     # Process
     height, width, depth = array.shape
@@ -155,12 +153,11 @@ def AC(array:np.ndarray, path:str, nlags:int=364):
             progress = int((i*width+j)/(height*width)*100)
     
     saving = True
-    if thread.is_alive():
-        thread.join()
     out_array = aux
     out_file = f'{name}_ACF1_{ext}'
     print("Saving in ", out_file)
-    saveBand(out_file, rt, aux)
+    saveBand(out_file, raster, aux)
+    rt = raster
     saving = False
 
 

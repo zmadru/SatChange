@@ -14,6 +14,7 @@ progress:int = 0
 out_file = None
 saving:bool = False
 array:np.ndarray = None
+rt = None
 
 # Load and save raster files
 def loadRasterImage(path):
@@ -28,11 +29,13 @@ def loadRasterImage(path):
         (boolean): Indicates that if there is an error
         (str): Indicates the associated error message
     """
+    global rt
     raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
     if raster_ds is None:
         return None, None, True, "The file cannot be opened."
     print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
     print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
+    rt = raster_ds
     if raster_ds.RasterCount == 1:
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
