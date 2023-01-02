@@ -15,6 +15,7 @@ import statsmodels.tsa.stattools as pc
 progress:int = 0
 out_file = None
 saving:bool = False
+start:bool = False
 out_array:np.ndarray = None
 
 rt = None
@@ -112,7 +113,7 @@ def ACFtif(path:str):
     nlags = 364
     height, width, depth = img.shape
     aux = np.zeros((height, width, nlags+1))
-    aux2 = np.zeros((height, width, nlags+1))
+    # aux2 = np.zeros((height, width, nlags+1))
         
 
     # Run by depth
@@ -135,11 +136,19 @@ def ACFtif(path:str):
     saving = False
     return aux
 
-def AC(array:np.ndarray, path:str, raster, nlags:int=364):
+def ac(array:np.ndarray, path:str, raster, nlags:int=364):
+    """Calculate the autocorrelation function of a raster image
 
-    global progress, out_file, saving, out_array, rt
+    Args:
+        array (np.ndarray): Matrix of the raster image
+        path (str): Path to the raster image
+        raster (_type_): raster to set the output projection
+        nlags (int, optional): number of lags. Defaults to 364.
+    """
+    global progress, out_file, saving, out_array, rt, start
     progress = 0
     saving = False
+    start = True
 
     # Read raster
     name, ext = os.path.splitext(path)
@@ -159,6 +168,7 @@ def AC(array:np.ndarray, path:str, raster, nlags:int=364):
     saveBand(out_file, raster, aux)
     rt = raster
     saving = False
+    start = False
 
 
 

@@ -203,6 +203,7 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str, raster
     print("Saving in ", dst)
     saveSingleBand(dst, raster, rmse, tt=gdal.GDT_Float32)##
     rt = raster
+    saving = False
 
 
    

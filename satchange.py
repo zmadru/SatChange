@@ -1423,8 +1423,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating autocorrelation")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=ACF.AC, args=(filtro.out_array, filtro.out_file, filtro.rt))
+        thread = Thread(target=ACF.ac, args=(filtro.out_array, filtro.out_file, filtro.rt))
         thread.start()
+
+        while not ACF.start:
+            self.update()
+            self.master.update()
 
         while ACF.progress < 100:
             self.percentagelabel.configure(text=str(ACF.progress).split('.')[0] + "%")
