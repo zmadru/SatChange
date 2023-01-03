@@ -81,10 +81,9 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
         tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
         typ (str, optional): Defaults to 'GTiff'. Driver used to save.
     """
-    xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
+    xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, nlags+1
     transform = rt.GetGeoTransform()
     geotiff = gdal.GetDriverByName(typ)
-    zsize += 1
     output = geotiff.Create(dst, xsize, ysize, zsize, tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
@@ -101,7 +100,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
 # Main
 img = None
 def ACFtif(path:str):
-    global progress, out_file, saving
+    global progress, out_file, saving, start, nlags
     name, ext = os.path.splitext(path)
     # Read raster
     rt, img, err, msg = loadRasterImage(path)
@@ -115,7 +114,7 @@ def ACFtif(path:str):
     aux = np.zeros((height, width, nlags+1))
     # aux2 = np.zeros((height, width, nlags+1))
         
-
+    start = True
     # Run by depth
     for i in range(height):
         for j in range(width):
@@ -134,6 +133,7 @@ def ACFtif(path:str):
     # print("Saving in ", dst)
     # saveBand(dst, rt, aux2)
     saving = False
+    start = False
     return aux
 
 def ac(array:np.ndarray, path:str, raster, nlags:int=364):
