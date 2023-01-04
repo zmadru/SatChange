@@ -136,7 +136,7 @@ def ACFtif(path:str):
     start = False
     return aux
 
-def ac(array:np.ndarray, path:str, raster, nlags:int=364):
+def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     """Calculate the autocorrelation function of a raster image
 
     Args:
@@ -145,7 +145,9 @@ def ac(array:np.ndarray, path:str, raster, nlags:int=364):
         raster (_type_): raster to set the output projection
         nlags (int, optional): number of lags. Defaults to 364.
     """
-    global progress, out_file, saving, out_array, rt, start
+    global progress, out_file, saving, out_array, rt, start, nlags
+
+    nlags = nlags_
     progress = 0
     saving = False
     start = True

@@ -1287,7 +1287,7 @@ class NewProcessWin(ctk.CTkFrame):
             self.autocorrelation(index="4.0")
         elif self.stackSwitch.get() == True:
             # 1 - Interpolate the stack
-            self.interpolate(index="1.0")
+            # self.interpolate(index="1.0")
             # 2 - Filter the stack interpolated
             self.filter(index="2.0")
             # 3 - Calculate the autocorrelation
@@ -1390,6 +1390,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.configure(state="disabled")
 
         thread = Thread(target=filtro.getFilter, args=(interpolacion.array, 3, 2, interpolacion.out_file, interpolacion.rt))
+        # thread = Thread(target=filtro.getFiltRaster, args=(self.infiles, 3, 2))
         thread.start()
 
         while not filtro.start:
@@ -1399,10 +1400,10 @@ class NewProcessWin(ctk.CTkFrame):
         while filtro.progress < 100:
             self.percentagelabel.configure(text=str(filtro.progress).split('.')[0] + "%")
             self.update()
-            if not thread.is_alive():
-                self.error()
-                self.back()
-                break
+            # if not thread.is_alive():
+            #     self.error()
+            #     self.back()
+            #     break
 
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
@@ -1423,7 +1424,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating autocorrelation")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=ACF.ACFtif(filtro.out_file))
+        print(filtro.out_file)
+        # thread = Thread(target=ACF.ACFtif(filtro.out_file))
+        thread = Thread(target=ACF.ac(filtro.out_array, filtro.out_file, filtro.rt))
         thread.start()
 
         while not ACF.start:
@@ -1442,9 +1445,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.percentagelabel.update()
         while ACF.saving == True:
             self.update()
-            
-        if thread.is_alive():
-            thread.join()
+
+        try:
+            if thread.is_alive():
+                thread.join()
+        except AttributeError:
+            pass   
             
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nAutocorrelation calculated")
