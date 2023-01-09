@@ -1445,12 +1445,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.percentagelabel.update()
         while ACF.saving == True:
             self.update()
-
-        try:
-            if thread.is_alive():
-                thread.join()
-        except AttributeError:
-            pass   
+            self.master.update()         
             
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nAutocorrelation calculated")

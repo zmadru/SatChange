@@ -163,6 +163,10 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
             aux[i, j, :] = pc.acf(array[i, j, :], nlags=nlags, alpha=0.05)[0]
             progress = int((i*width+j)/(height*width)*100)
     
+    # Remove the first lag (0), because it is always 1
+    aux = aux[:, :, 1:]
+
+    # Save
     saving = True
     out_array = aux
     out_file = f'{name}_ACF1_{ext}'
@@ -171,8 +175,6 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     rt = raster
     saving = False
     start = False
-
-
 
 
 if __name__ == "__main__":
