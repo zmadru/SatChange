@@ -3,7 +3,7 @@ from osgeo import gdal
 from osgeo import osr
 #import gdal, osr
 import numpy as np
-import threading
+from multiprocessing import Pool 
 
 # Global variables
 progress:int = 0
@@ -111,19 +111,15 @@ def changeDetector(array:np.ndarray, path:str, raster):
     mask = np.zeros(array.shape[:2], dtype=np.uint8)
 
     # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
-    threads = []
     for i in range(height):
         for j in range(width):
-            threads.append(threading.Thread(target=checkPixel, args=(i, j, array[i, j, :], array.shape[2])))
-            threads[-1].start()
+           checkPixel(i, j, array[i, j], array.shape[2])
 
-    # Wait for all threads to finish
-    while threading.active_count() > 1:
-        pass
-
+    progress = height*width
     # Save the mask
     saving = True
-    saveSingleBand(name + "_mask" + ext, raster, mask, gdal.GDT_Byte, 'GTiff')
+    out_file = name + "_mask" + ext
+    saveSingleBand(out_file, raster, mask, gdal.GDT_Byte, 'GTiff')
     saving = False
     start = False
 
@@ -139,9 +135,12 @@ def changeDetectorFile(path:str):
     """
     
     # Read raster
-    rt, img, err, msg = loadRasterImage(path)
+    global total
+    rt, img, err, msg = loadRasterImage(path) 
     if err:
         print(msg)
         sys.exit(1)
+    
+    total = img.shape[0]*img.shape[1]
 
     changeDetector(img, path, rt)

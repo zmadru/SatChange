@@ -11,7 +11,9 @@ import lib.interpolacion as interpolacion
 import lib.filtro_SGV1 as filtro
 import lib.indexes as indexes
 import lib.ACF as ACF
+import lib.changeDetector as changeDetector
 from threading import Thread
+import multiprocessing
 
 """
 This class is the main class of the program, it is the GUI of the program
@@ -48,6 +50,7 @@ class App(ctk.CTk):
         self.filtwin = FilterWindow(self)
         self.indexwin = IndexesWindow(self)
         self.autowin = AcWindow(self)
+        self.changewin = ChangedetectorWin(self)
         self.newwin = NewProcessWin(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -76,7 +79,7 @@ class App(ctk.CTk):
         self.file_menu.add_command(label="Interpolation", command=self.interpolation)
         self.file_menu.add_command(label="Filter", command=self.filter)
         self.file_menu.add_command(label="Autocorrelation", command=self.autocorrelation)
-        self.file_menu.add_command(label="Change detection")
+        self.file_menu.add_command(label="Change detection", command=self.changedetector)
 
         # add help entry
         self.help_menu = tk.Menu(self.menu)
@@ -128,6 +131,7 @@ class App(ctk.CTk):
         self.filtwin.pack_forget()
         self.indexwin.pack_forget()
         self.autowin.pack_forget()
+        self.changewin.pack_forget()
         self.newwin.pack_forget()
         
 
@@ -183,6 +187,13 @@ class App(ctk.CTk):
         """
         self.unpackAll()    
         self.autowin.pack(expand=True, fill="both", padx=10, pady=10)
+    
+    def changedetector(self):
+        """
+        Show the change detector window
+        """
+        self.unpackAll()
+        self.changewin.pack(expand=True, fill="both", padx=10, pady=10)
 
     def newProcess(self):
         """
@@ -249,7 +260,7 @@ class IndexWindow(ctk.CTkFrame):
         self.button4.grid(row=4, column=0)
         self.button5 = ctk.CTkButton(self, text="Autocorrelation", command=self.master.autocorrelation)
         self.button5.grid(row=5, column=0)
-        self.button6 = ctk.CTkButton(self, text="Change detection")
+        self.button6 = ctk.CTkButton(self, text="Change detection", command=self.master.changedetector)
         self.button6.grid(row=5, column=1)
         self.button7 = ctk.CTkButton(self, text="Filter", command=self.master.filter)
         self.button7.grid(row=3, column=1)
@@ -1018,6 +1029,129 @@ class AcWindow(ctk.CTkFrame):
         """
         self.master.index()
 
+class ChangedetectorWin(ctk.CTkFrame):
+    """Class which contains the change detector given a autocorrelation file
+    """
+    def __init__(self, master, solo=True):
+        """
+        Constructor
+        """
+        super().__init__(master)
+        self.master = master
+        self.grid_rowconfigure((0,5), weight=5)
+        self.grid_columnconfigure((0,3), weight=2)
+        self.solo = solo
+        self.file = ""
+        self.create_widgets()
+        
+    def create_widgets(self):
+        """
+        Create the widgets of the window
+        """
+        self.create_label()
+        self.create_buttons()
+
+    def create_label(self):
+        """
+        Create the label of the window
+        """
+        self.label = ctk.CTkLabel(self, text="Change Detector", font=("Helvetica", 36, "bold"))
+        self.label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No input file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="we",padx=10, pady=10)
+
+    def create_buttons(self):
+        """
+        Create the buttons of the window
+        """
+        self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
+        self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.changedetection)
+        self.startBtn.grid(row=3, column=1, padx=10, pady=10)
+        self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
+        self.backBtn.grid(row=3, column=2, padx=10, pady=10)
+        self.pb = ctk.CTkProgressBar(self, mode='determinate')
+        self.pb.set(0)
+        self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+
+    def select(self):
+        """
+        Select the file to calculate the AC
+        """
+        self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to analize", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
+        if self.file != "":
+            self.fileLabel.insert("0.0",self.file)
+        else:
+            self.fileLabel.insert("0.0","No input file selected")
+        self.fileLabel.configure(state="disabled")
+
+    def selectDir(self):
+        """
+        Select the output directory
+        """
+        self.dir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
+        self.dirLabel.config(text=self.dir)
+    
+    def changedetection(self):
+        """
+        Calculate the ac
+        """
+        if self.file == "":
+            showerror("Error", "No input file selected")
+        else:
+            self.thd = multiprocessing.Process(target=changeDetector.changeDetectorFile(self.file))
+            self.thd.start()
+            self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
+            self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+            self.pb.start()
+            self.percentajeLabel = ctk.CTkLabel(self)
+            self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
+            self.startBtn.configure(state="disabled")
+            self.backBtn.configure(state="disabled")
+
+            while changeDetector.start:
+                self.update()
+                self.master.update()
+
+            while changeDetector.progress < changeDetector.total:
+                self.percentajeLabel.configure(text=f"{changeDetector.progress}/{changeDetector.total}")
+                self.percentajeLabel.update()
+                self.update()
+                if not self.thd.is_alive():
+                    self.error()
+                    self.master.log()
+                    break
+
+            self.percentajeLabel.configure(text="Saving...")
+            self.percentajeLabel.update()
+
+            # if self.thd.is_alive():
+            #     self.join()
+            
+            self.startBtn.configure(state="normal")
+            self.backBtn.configure(state="normal")
+            self.pb.stop()
+            self.percentajeLabel.destroy()
+            showinfo("Satchange", f"File saved in {changeDetector.out_file}")            
+
+    def error(self):
+        """
+        Show error message
+        """
+        showerror("Error", "The process has failed, check the log file")
+        self.back()
+    
+    
+    def back(self):
+        """
+        Back to the index window
+        """
+        self.master.index()
+
 
 class NewProcessWin(ctk.CTkFrame):
     """
@@ -1089,9 +1223,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
         self.configLabel.grid(row=0, column=0)
         self.nextbutton = ctk.CTkButton(self.configFrame, text="Next", command=self.checkparams, state="disabled")
-        self.nextbutton.grid(row=5, column=3, padx=5, pady=5)
+        self.nextbutton.grid(row=6, column=3, padx=5, pady=5)
         self.backbutton = ctk.CTkButton(self.configFrame, text="Cancel", command=self.cancel)
-        self.backbutton.grid(row=5, column=0, padx=5, pady=5)
+        self.backbutton.grid(row=6, column=0, padx=5, pady=5)
 
         # select the index and the sensor 
         self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
@@ -1123,6 +1257,12 @@ class NewProcessWin(ctk.CTkFrame):
         self.modeSelect = ctk.CTkOptionMenu(self.configFrame, values=["SGV"], state="readonly")
         self.modeSelect.grid(row=4, column=2, padx=5, pady=5)
 
+        # autocorrelation configuration
+        self.autolabel = ctk.CTkLabel(self.configFrame, text="Autocorrelation configuration")
+        self.autolabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.autoEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of lags")
+        self.autoEntry.grid(row=5, column=2, padx=5, pady=5, sticky="ew")
+
 
     def checkparams(self):
         """
@@ -1134,6 +1274,8 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "No stack name selected")
         elif self.outdir == "":
             showerror("Error", "No output directory selected")
+        elif self.autoEntry.get().isdecimal() == False:
+            showerror("Error", "The number of lags must be a number")
         else:
             # ask for confirmation before starting the process
             if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
@@ -1278,20 +1420,23 @@ class NewProcessWin(ctk.CTkFrame):
             self.autocorrelation()
         elif self.procesedSwitch.get() == True:
             # 1 - Calculate the stack
-            self.stack(index="1.0")
+            self.stack()
             # 2 - Interpolate the stack
-            self.interpolate(index="2.0")
+            self.interpolate()
             # 3 - Filter the stack interpolated
-            self.filter(index="3.0")
+            self.filter()
             # 4 - Calculate the autocorrelation
-            self.autocorrelation(index="4.0")
+            self.autocorrelation()
         elif self.stackSwitch.get() == True:
             # 1 - Interpolate the stack
-            # self.interpolate(index="1.0")
+            self.interpolate()
             # 2 - Filter the stack interpolated
-            self.filter(index="2.0")
+            self.filter()
             # 3 - Calculate the autocorrelation
-            self.autocorrelation(index="3.0")
+            self.autocorrelation()
+
+        self.pb.stop()
+
             
 
     def indexes(self):
@@ -1426,7 +1571,8 @@ class NewProcessWin(ctk.CTkFrame):
 
         print(filtro.out_file)
         # thread = Thread(target=ACF.ACFtif(filtro.out_file))
-        thread = Thread(target=ACF.ac(filtro.out_array, filtro.out_file, filtro.rt))
+        lags = int(self.autoEntry.get())
+        thread = multiprocessing.Process(target=ACF.ac(filtro.out_array, filtro.out_file, filtro.rt, lags))
         thread.start()
 
         while not ACF.start:
@@ -1436,20 +1582,48 @@ class NewProcessWin(ctk.CTkFrame):
         while ACF.progress < 100:
             self.percentagelabel.configure(text=str(ACF.progress).split('.')[0] + "%")
             self.update()
-            # if not thread.is_alive():
-            #     self.error()
-            #     self.back()
-            #     break
             
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        while ACF.saving == True:
-            self.update()
-            self.master.update()         
+        # while ACF.saving == True:
+        #     self.update()
+        #     self.master.update()
+        #     if not thread.is_alive():
+        #         break        
             
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nAutocorrelation calculated")
         self.infolabel.configure(state="disabled")
+
+    def changeDetection(self):
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Calculating change detection")
+        self.processlabel.configure(state="disabled")
+
+        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt))
+        thread.start()
+
+        while not changeDetector.start:
+            self.update()
+            self.master.update()
+
+        while changeDetector.progress < 100:
+            self.percentagelabel.configure(text=str(changeDetector.progress).split('.')[0] + "%")
+            self.update()
+            
+        self.percentagelabel.configure(text="Saving...")
+        self.percentagelabel.update()
+        while changeDetector.saving == True:
+            self.update()
+            self.master.update() 
+            if not thread.is_alive():
+                break          
+            
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert("end", "\nChange detection calculated")
+        self.infolabel.configure(state="disabled")
+        showinfo("Done", f"Process finished, check the output folder,{changeDetector.out_file} has been created")
 
     def error(self):
         showerror("Error", "An error has occurred. Please check the error log file")
