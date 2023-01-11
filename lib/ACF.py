@@ -99,7 +99,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
 
 # Main
 img = None
-def ACFtif(path:str):
+def ACFtif(path:str, nlags_:int = 364):
     global progress, out_file, saving, start, nlags
     name, ext = os.path.splitext(path)
     # Read raster
@@ -109,7 +109,7 @@ def ACFtif(path:str):
         sys.exit(1)
 
     # Auxiliar
-    nlags = 364
+    nlags = nlags_
     height, width, depth = img.shape
     aux = np.zeros((height, width, nlags+1))
     # aux2 = np.zeros((height, width, nlags+1))

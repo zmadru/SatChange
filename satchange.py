@@ -938,6 +938,8 @@ class AcWindow(ctk.CTkFrame):
         """
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.entry = ctk.CTkEntry(self, placeholder_text="Number of lags")
+        self.entry.grid(row=3, column=0, padx=10, pady=10)
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.run)
         self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
@@ -972,8 +974,12 @@ class AcWindow(ctk.CTkFrame):
         """
         if self.file == "":
             showerror("Error", "No input file selected")
+        elif self.entry.get() == "":
+            showerror("Error", "No number of lags selected")
+        elif not self.entry.get().isdigit():
+            showerror("Error", "The number of lags must be a number")
         else:
-            self.thd = Thread(target=ACF.ACFtif(self.file))
+            self.thd = Thread(target=ACF.ACFtif(self.file, int(self.entry.get())))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
@@ -1418,6 +1424,8 @@ class NewProcessWin(ctk.CTkFrame):
             self.filter()
             # 5 - Calculate the autocorrelation
             self.autocorrelation()
+            # 6 - Calculate the change
+            self.changeDetection()
         elif self.procesedSwitch.get() == True:
             # 1 - Calculate the stack
             self.stack()
@@ -1427,6 +1435,8 @@ class NewProcessWin(ctk.CTkFrame):
             self.filter()
             # 4 - Calculate the autocorrelation
             self.autocorrelation()
+            # 5 - Calculate the change
+            self.changeDetection()
         elif self.stackSwitch.get() == True:
             # 1 - Interpolate the stack
             self.interpolate()
@@ -1434,6 +1444,10 @@ class NewProcessWin(ctk.CTkFrame):
             self.filter()
             # 3 - Calculate the autocorrelation
             self.autocorrelation()
+            # 4 - Calculate the change
+            self.changeDetection()
+        
+        
 
         self.pb.stop()
 
