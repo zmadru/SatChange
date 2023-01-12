@@ -993,17 +993,13 @@ class AcWindow(ctk.CTkFrame):
                 self.percentajeLabel.configure(text=f"{ACF.progress}%")
                 self.percentajeLabel.update()
                 self.update()
-                if not self.thd.is_alive():
-                    self.error()
-                    self.master.log()
-                    break
 
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
             
-            while ACF.saving:
-                self.update()
-                self.master.update()
+            # while ACF.saving:
+            #     self.update()
+            #     self.master.update()
             
             self.startBtn.configure(state="normal")
             self.backBtn.configure(state="normal")
@@ -1074,6 +1070,8 @@ class ChangedetectorWin(ctk.CTkFrame):
         """
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.senEntry = ctk.CTkEntry(self, placeholder_text="Enter the sensitivity, 0.2 by default")
+        self.senEntry.grid(row=2, column=1, padx=10, pady=10, columnspan=2, sticky="ew")
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.changedetection)
         self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
@@ -1106,10 +1104,21 @@ class ChangedetectorWin(ctk.CTkFrame):
         """
         Calculate the ac
         """
+        default:bool = False
         if self.file == "":
             showerror("Error", "No input file selected")
+        elif self.senEntry.get() == "":
+            default = True
         else:
-            self.thd = multiprocessing.Process(target=changeDetector.changeDetectorFile(self.file))
+            if default:
+                sensitivity = 0.2
+            else:
+                try:
+                    sensitivity = float(self.senEntry.get())
+                except ValueError:
+                    showerror("Error", "The sensitivity must be a number")
+                    return
+            self.thd = multiprocessing.Process(target=changeDetector.changeDetectorFile(self.file, sensitivity))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
@@ -1229,9 +1238,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
         self.configLabel.grid(row=0, column=0)
         self.nextbutton = ctk.CTkButton(self.configFrame, text="Next", command=self.checkparams, state="disabled")
-        self.nextbutton.grid(row=6, column=3, padx=5, pady=5)
+        self.nextbutton.grid(row=7, column=3, padx=5, pady=5)
         self.backbutton = ctk.CTkButton(self.configFrame, text="Cancel", command=self.cancel)
-        self.backbutton.grid(row=6, column=0, padx=5, pady=5)
+        self.backbutton.grid(row=7, column=0, padx=5, pady=5)
 
         # select the index and the sensor 
         self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
@@ -1269,6 +1278,13 @@ class NewProcessWin(ctk.CTkFrame):
         self.autoEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of lags")
         self.autoEntry.grid(row=5, column=2, padx=5, pady=5, sticky="ew")
 
+        # changedetection configuration sensivility
+        self.senslabel = ctk.CTkLabel(self.configFrame, text="Sensibility")
+        self.senslabel.grid(row=6, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.sensEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Sensibility, default 0.2")
+        self.sensEntry.grid(row=6, column=2, padx=5, pady=5, sticky="ew")
+
+
 
     def checkparams(self):
         """
@@ -1282,7 +1298,16 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "No output directory selected")
         elif self.autoEntry.get().isdecimal() == False:
             showerror("Error", "The number of lags must be a number")
+        elif self.sensEntry.get() != "":
+            try:
+                float(self.sensEntry.get())
+            except ValueError:
+                showerror("Error", "The sensibility must be a number")
         else:
+            if self.sensEntry.get() == "":
+                self.sens = 0.2
+            else:
+                self.sens = float(self.sensEntry.get())
             # ask for confirmation before starting the process
             if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
                 self.startprocess()
@@ -1615,7 +1640,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating change detection")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt))
+        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt, self.sens))
         thread.start()
 
         while not changeDetector.start:
@@ -1628,11 +1653,11 @@ class NewProcessWin(ctk.CTkFrame):
             
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        while changeDetector.saving == True:
-            self.update()
-            self.master.update() 
-            if not thread.is_alive():
-                break          
+        # while changeDetector.saving == True:
+        #     self.update()
+        #     self.master.update() 
+        #     if not thread.is_alive():
+        #         break          
             
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nChange detection calculated")

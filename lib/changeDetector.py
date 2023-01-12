@@ -65,7 +65,7 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     output = None
 
 
-def checkPixel(i, j, array, length):
+def checkPixel(i, j, array, length, sensivity:int=0.2):
     """Check the time serie from a pixel to see if there are an average of 50% of positive and negative values
     
     Args:
@@ -73,6 +73,7 @@ def checkPixel(i, j, array, length):
         j (int): Column
         array (np.ndarray): Time serie of the pixel
         length (int): Length of the time serie
+        sensivity (int, optional): Defaults to 0.2. Sensivity of the change detector
     """
     global mask, progress
 
@@ -84,7 +85,7 @@ def checkPixel(i, j, array, length):
             negatives += 1
 
     # If the average of the positive and negatives values is near to fifty (40, 60), the pixel is not considered as a change
-    if positives/length < 0.4 or negatives/length < 0.4:
+    if positives/length < sensivity or negatives/length < sensivity:
         mask[i, j] = 1
     
     progress += 1
@@ -92,7 +93,7 @@ def checkPixel(i, j, array, length):
     
 
 
-def changeDetector(array:np.ndarray, path:str, raster):
+def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     """Calculate the change detector of an array given an array
     
     Args:
@@ -113,7 +114,7 @@ def changeDetector(array:np.ndarray, path:str, raster):
     # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
     for i in range(height):
         for j in range(width):
-           checkPixel(i, j, array[i, j], array.shape[2])
+           checkPixel(i, j, array[i, j], array.shape[2], sensivity)
 
     progress = height*width
     # Save the mask
@@ -127,7 +128,7 @@ def changeDetector(array:np.ndarray, path:str, raster):
    
 
 
-def changeDetectorFile(path:str):
+def changeDetectorFile(path:str, sensivity:int=0.2):
     """Calculate the change detector of raster image 
 
     Args:
@@ -143,4 +144,4 @@ def changeDetectorFile(path:str):
     
     total = img.shape[0]*img.shape[1]
 
-    changeDetector(img, path, rt)
+    changeDetector(img, path, rt, sensivity)
