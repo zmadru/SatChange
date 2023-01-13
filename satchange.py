@@ -1300,6 +1300,8 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "No stack name selected")
         elif self.outdir == "":
             showerror("Error", "No output directory selected")
+        elif self.autoEntry.get() == "":
+            showerror("Error", "No number of lags selected")
         elif self.autoEntry.get().isdecimal() == False:
             showerror("Error", "The number of lags must be a number")
         else:
