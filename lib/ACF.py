@@ -165,6 +165,7 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
         for j in range(width):
             aux[i, j, :] = pc.acf(array[i, j, :], nlags=nlags, alpha=0.05)[0]
             progress = int((i*width+j)/(height*width)*100)
+    progress = 100
     
     # Remove the first lag (0), because it is always 1
     aux = aux[:, :, 1:]

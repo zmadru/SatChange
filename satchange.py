@@ -979,15 +979,19 @@ class AcWindow(ctk.CTkFrame):
         elif not self.entry.get().isdigit():
             showerror("Error", "The number of lags must be a number")
         else:
-            self.thd = Thread(target=ACF.ACFtif(self.file, int(self.entry.get())))
-            self.thd.start()
+            self.thd = Thread(target=ACF.ACFtif, args=(self.file, int(self.entry.get())))
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
-            self.pb.start()
-            self.percentajeLabel = ctk.CTkLabel(self, text="0%")
+            self.percentajeLabel = ctk.CTkLabel(self, text="Loading...")
             self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
             self.startBtn.configure(state="disabled")
             self.backBtn.configure(state="disabled")
+            self.thd.start()
+            self.pb.start()
+
+            while not ACF.start:
+                self.update()
+                self.master.update()
 
             while ACF.progress < 100:
                 self.percentajeLabel.configure(text=f"{ACF.progress}%")
@@ -997,9 +1001,9 @@ class AcWindow(ctk.CTkFrame):
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
             
-            # while ACF.saving:
-            #     self.update()
-            #     self.master.update()
+            while ACF.saving:
+                self.update()
+                self.master.update()
             
             self.startBtn.configure(state="normal")
             self.backBtn.configure(state="normal")
@@ -1104,13 +1108,10 @@ class ChangedetectorWin(ctk.CTkFrame):
         """
         Calculate the ac
         """
-        default:bool = False
         if self.file == "":
             showerror("Error", "No input file selected")
-        elif self.senEntry.get() == "":
-            default = True
         else:
-            if default:
+            if self.senEntry.get() == "":
                 sensitivity = 0.2
             else:
                 try:
@@ -1118,17 +1119,17 @@ class ChangedetectorWin(ctk.CTkFrame):
                 except ValueError:
                     showerror("Error", "The sensitivity must be a number")
                     return
-            self.thd = multiprocessing.Process(target=changeDetector.changeDetectorFile(self.file, sensitivity))
+            self.thd = Thread(target=changeDetector.changeDetectorFile, args=(self.file, sensitivity))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
-            self.pb.start()
-            self.percentajeLabel = ctk.CTkLabel(self)
+            self.percentajeLabel = ctk.CTkLabel(self, text="Loading...")
             self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
             self.startBtn.configure(state="disabled")
             self.backBtn.configure(state="disabled")
+            self.pb.start()
 
-            while changeDetector.start:
+            while not changeDetector.start:
                 self.update()
                 self.master.update()
 
@@ -1136,14 +1137,17 @@ class ChangedetectorWin(ctk.CTkFrame):
                 self.percentajeLabel.configure(text=f"{changeDetector.progress}/{changeDetector.total}")
                 self.percentajeLabel.update()
                 self.update()
-                if not self.thd.is_alive():
-                    self.error()
-                    self.master.log()
-                    break
+                # if not self.thd.is_alive():
+                #     self.error()
+                #     self.master.log()
+                #     break
 
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
-
+            
+            while changeDetector.saving:
+                self.update()
+                self.master.update()
             # if self.thd.is_alive():
             #     self.join()
             
@@ -1298,16 +1302,14 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "No output directory selected")
         elif self.autoEntry.get().isdecimal() == False:
             showerror("Error", "The number of lags must be a number")
-        elif self.sensEntry.get() != "":
-            try:
-                float(self.sensEntry.get())
-            except ValueError:
-                showerror("Error", "The sensibility must be a number")
         else:
             if self.sensEntry.get() == "":
                 self.sens = 0.2
             else:
-                self.sens = float(self.sensEntry.get())
+                try:
+                   self.sens = float(self.sensEntry.get())
+                except ValueError:
+                    showerror("Error", "The sensibility must be a number")
             # ask for confirmation before starting the process
             if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
                 self.startprocess()
@@ -1611,7 +1613,7 @@ class NewProcessWin(ctk.CTkFrame):
         print(filtro.out_file)
         # thread = Thread(target=ACF.ACFtif(filtro.out_file))
         lags = int(self.autoEntry.get())
-        thread = multiprocessing.Process(target=ACF.ac(filtro.out_array, filtro.out_file, filtro.rt, lags))
+        thread = Thread(target=ACF.ac, args=(filtro.out_array, filtro.out_file, filtro.rt, lags))
         thread.start()
 
         while not ACF.start:
@@ -1624,11 +1626,11 @@ class NewProcessWin(ctk.CTkFrame):
             
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        # while ACF.saving == True:
-        #     self.update()
-        #     self.master.update()
-        #     if not thread.is_alive():
-        #         break        
+        while ACF.saving == True:
+            self.update()
+            self.master.update()
+            # if not thread.is_alive():
+            #     break        
             
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nAutocorrelation calculated")
@@ -1647,15 +1649,15 @@ class NewProcessWin(ctk.CTkFrame):
             self.update()
             self.master.update()
 
-        while changeDetector.progress < 100:
-            self.percentagelabel.configure(text=str(changeDetector.progress).split('.')[0] + "%")
+        while changeDetector.progress < changeDetector.total:
+            self.percentagelabel.configure(text=str(changeDetector.progress)+"/"+str(changeDetector.total))
             self.update()
             
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        # while changeDetector.saving == True:
-        #     self.update()
-        #     self.master.update() 
+        while changeDetector.saving:
+            self.update()
+            self.master.update() 
         #     if not thread.is_alive():
         #         break          
             

@@ -100,11 +100,12 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
         array (np.ndarray): Matrix of the raster image autocorrelation
         path (str): Path to the raster image
     """
-    global progress, out_file, saving, out_array, start, mask
+    global progress, out_file, saving, out_array, start, mask, total
 
     progress = 0
     saving = False
     start = True
+    total = array.shape[0]*array.shape[1]
 
     # Read raster
     height, width = array.shape[:2]
@@ -134,14 +135,10 @@ def changeDetectorFile(path:str, sensivity:int=0.2):
     Args:
         path (str): Path to the raster image
     """
-    
     # Read raster
-    global total
     rt, img, err, msg = loadRasterImage(path) 
     if err:
         print(msg)
         sys.exit(1)
-    
-    total = img.shape[0]*img.shape[1]
 
     changeDetector(img, path, rt, sensivity)
