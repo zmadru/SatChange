@@ -1650,7 +1650,8 @@ class NewProcessWin(ctk.CTkFrame):
             self.master.update()
 
         while changeDetector.progress < changeDetector.total:
-            self.percentagelabel.configure(text=str(changeDetector.progress)+"/"+str(changeDetector.total))
+            percentage = (changeDetector.progress/changeDetector.total)*100
+            self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
             self.update()
             
         self.percentagelabel.configure(text="Saving...")
