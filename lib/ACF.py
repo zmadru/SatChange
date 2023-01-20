@@ -128,7 +128,7 @@ def ACFtif(path:str, nlags_:int = 364):
                         
     # Save
     saving = True
-    dst = f'{name}_ACF1_{ext}'
+    dst = f'{name}_ACF1_L{nlags}{ext}'
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
     out_file = dst
