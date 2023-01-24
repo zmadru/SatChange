@@ -391,7 +391,7 @@ class StackWindow(ctk.CTkFrame):
             while stackInt.progress/stackInt.total*100 < 100:
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.update()
-                if not thd.is_alive():
+                if not thd.is_alive() and filtro.progress < 100:
                     self.error()
                     self.cancel()
                     break
@@ -537,7 +537,7 @@ class InterpolationWindow(ctk.CTkFrame):
             while interpolacion.progress < 100:
                 self.percentajeLabel.configure(text=(str(interpolacion.progress).split(".")[0]+"%"))
                 self.update()
-                if not self.thd.is_alive():
+                if not self.thd.is_alive() and filtro.progress < 100:
                     self.error()
                     self.master.log()
                     break
@@ -684,7 +684,7 @@ class FilterWindow(ctk.CTkFrame):
             while filtro.progress < 100:
                 self.percentajeLabel.configure(text=str(filtro.progress).split(".")[0]+"%")
                 self.update()
-                if not self.thd.is_alive():
+                if not self.thd.is_alive() and filtro.progress < 100:
                     self.error()
                     self.master.log()
                     break
@@ -852,7 +852,7 @@ class IndexesWindow(ctk.CTkFrame):
             while indexes.progress < 100:
                 self.pblabel.configure(text=str(indexes.progress).split(".")[0]+"%")
                 self.update()
-                if not self.thread.is_alive():
+                if not self.thread.is_alive() and filtro.progress < 100:
                     self.error()
                     self.master.log()
                     break

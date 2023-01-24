@@ -147,7 +147,8 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
         for j in range(width):
             aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
             rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
-            pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
+            # pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
+            pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##
             progress = int((i * width + j) / (height * width) * 100)
     progress = 100
 
