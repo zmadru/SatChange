@@ -173,7 +173,7 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     # Save
     saving = True
     out_array = aux
-    out_file = f'{name}_ACF1_{ext}'
+    out_file = f'{name}_ACF1_L{nlags}{ext}'
     print("Saving in ", out_file)
     saveBand(out_file, raster, aux)
     rt = raster

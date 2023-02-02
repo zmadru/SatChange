@@ -120,7 +120,7 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     progress = height*width
     # Save the mask
     saving = True
-    out_file = name + "_mask" + ext
+    out_file = name + "_mask" + str(sensivity) + ext
     saveSingleBand(out_file, raster, mask, gdal.GDT_Byte, 'GTiff')
     saving = False
     start = False
