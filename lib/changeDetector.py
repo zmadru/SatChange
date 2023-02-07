@@ -1,6 +1,7 @@
 import os, sys
 from osgeo import gdal
 from osgeo import osr
+from osgeo import ogr
 #import gdal, osr
 import numpy as np
 from multiprocessing import Pool 
@@ -11,6 +12,7 @@ out_file = None
 saving:bool = False
 start:bool = False
 out_array:np.ndarray = None
+points = ogr.Geometry(ogr.wkbMultiPoint)
 
 rt = None
 
@@ -54,7 +56,7 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     """
     transform = rt.GetGeoTransform()
     geotiff = gdal.GetDriverByName(typ)
-    output = geotiff.Create(dst, rt.RasterXSize, rt.RasterYSize, 1,tt)
+    output = geotiff.Create(dst+'.tif', rt.RasterXSize, rt.RasterYSize, 1,tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt)
@@ -62,6 +64,16 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     output.GetRasterBand(1).SetNoDataValue(-999)
     output.SetGeoTransform(transform)
     output.SetProjection(srs.ExportToWkt())
+    output = None
+    # Save as a shpefile
+    shapefile = gdal.GetDriverByName('ESRI Shapefile')
+    output = shapefile.CreateDataSource(dst+'.shp')
+    layer = output.CreateLayer(dst+'.shp', srs, ogr.wkbPoint)
+    feature = layer.GetLayerDefn()
+    outfeature = ogr.Feature(feature)
+    outfeature.SetGeometry(points)
+    layer.CreateFeature(outfeature)
+    # output.SetGeoTransform(transform)    
     output = None
 
 
@@ -75,7 +87,7 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         length (int): Length of the time serie
         sensivity (int, optional): Defaults to 0.2. Sensivity of the change detector
     """
-    global mask, progress
+    global mask, progress, points
 
     positives, negatives = 0, 0
     for k in range(length):
@@ -87,6 +99,9 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
     # If the average of the positive and negatives values is near to fifty (40, 60), the pixel is not considered as a change
     if positives/length < sensivity or negatives/length < sensivity:
         mask[i, j] = 1
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(i, j)
+        points.AddGeometry(point)
     
     progress += 1
         
@@ -120,7 +135,7 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     progress = height*width
     # Save the mask
     saving = True
-    out_file = name + "_mask" + str(sensivity) + ext
+    out_file = name + "_mask" + str(sensivity)
     saveSingleBand(out_file, raster, mask, gdal.GDT_Byte, 'GTiff')
     saving = False
     start = False
