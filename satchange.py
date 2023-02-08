@@ -1479,6 +1479,9 @@ class NewProcessWin(ctk.CTkFrame):
         
 
         self.pb.stop()
+        self.abortBtn.configure(text="Home")
+        self.abortBtn.configure(command=self.back)
+        self.abortBtn.update()
 
             
 
