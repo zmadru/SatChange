@@ -20,6 +20,7 @@ from osgeo import gdal
 import numpy as np
 import csv
 import pandas as pd
+from tqdm import tqdm
 
 ## Globals variables----------------------------------------------
 outdata = None  # output data
@@ -94,7 +95,7 @@ def __readDir(in_files: list) -> None:
     progress = 0
     start = True
 
-    for file in in_files:
+    for file in tqdm(in_files):
         src_file = gdal.Open(file)  # Open de file from de dir_in
         band = np.array(src_file.GetRasterBand(1).ReadAsArray().astype('float32'))  # Save the file as a band
         band = 10000 * np.nan_to_num(band)   # Multiply by 10000 to get the integer value
