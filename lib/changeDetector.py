@@ -4,7 +4,7 @@ from osgeo import osr
 from osgeo import ogr
 #import gdal, osr
 import numpy as np
-from multiprocessing import Pool 
+from multiprocessing import Pool, Queue
 
 # Global variables
 progress:int = 0
@@ -12,8 +12,6 @@ out_file = None
 saving:bool = False
 start:bool = False
 out_array:np.ndarray = None
-points = ogr.Geometry(ogr.wkbMultiPoint)
-
 rt = None
 
 # Load and save raster files
@@ -66,17 +64,46 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     output.SetProjection(srs.ExportToWkt())
     output = None
     # Save as a shpefile
-    shapefile = gdal.GetDriverByName('ESRI Shapefile')
-    output = shapefile.CreateDataSource(dst+'.shp')
-    layer = output.CreateLayer(dst+'.shp', geom_type=ogr.wkbMultiPoint)
-    feature = layer.GetLayerDefn()
-    outfeature = ogr.Feature(feature)
-    outfeature.SetGeometry(points)
-    layer.CreateFeature(outfeature)
-    outfeature = None
-    # output.SetGeoTransform(transform)    
-    output = None
+    saveShapefile(dst)
 
+
+def saveShapefile(dst):
+    """Save the mask as shapefile
+
+    Args:
+        dst (str): name of the output
+    """
+    raster = gdal.Open(dst+'.tif')
+    geotransform = raster.GetGeoTransform()
+    array = mask
+    
+    # Convert array to points
+    count = 0
+    roadList = np.where(array == 1)
+    multipoint = ogr.Geometry(ogr.wkbMultiPoint)
+    for indexY in roadList[0]:
+        indexX = roadList[1][count]
+        originX = geotransform[0]
+        originY = geotransform[3]
+        pixelWidth = geotransform[1]
+        pixelHeight = geotransform[5]
+        Xcoord = originX+pixelWidth*indexX
+        Ycoord = originY+pixelHeight*indexY
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(Xcoord, Ycoord)
+        multipoint.AddGeometry(point)
+        count += 1
+    
+    # Save point coordinates to Shapefile
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    outshp = driver.CreateDataSource(dst+'.shp')
+    outLayer = outshp.CreateLayer(dst+'.shp', geom_type=ogr.wkbMultiPoint)
+    featureDefn = outLayer.GetLayerDefn()
+    outFeature = ogr.Feature(featureDefn)
+    outFeature.SetGeometry(multipoint)
+    outLayer.CreateFeature(outFeature)
+    outFeature = None
+    
 
 def checkPixel(i, j, array, length, sensivity:int=0.2):
     """Check the time serie from a pixel to see if there are an average of 50% of positive and negative values
@@ -88,7 +115,7 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         length (int): Length of the time serie
         sensivity (int, optional): Defaults to 0.2. Sensivity of the change detector
     """
-    global mask, progress, points
+    global mask, progress
 
     positives, negatives = 0, 0
     for k in range(length):
@@ -100,15 +127,12 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
     # If the average of the positive and negatives values is near to fifty (40, 60), the pixel is not considered as a change
     if positives/length < sensivity or negatives/length < sensivity:
         mask[i, j] = 1
-        point = ogr.Geometry(ogr.wkbPoint)
-        point.AddPoint(i, j)
-        points.AddGeometry(point)
     
     progress += 1
         
     
 
-def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
+def changeDetector(queue:Queue, array:np.ndarray, path:str, raster, sensivity:int=0.2):
     """Calculate the change detector of an array given an array
     
     Args:
@@ -121,7 +145,8 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     saving = False
     start = True
     total = array.shape[0]*array.shape[1]
-
+    # send the total to the progress bar
+    queue.put(total)
     # Read raster
     height, width = array.shape[:2]
     name, ext = os.path.splitext(path)
@@ -131,8 +156,10 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     for i in range(height):
         for j in range(width):
            checkPixel(i, j, array[i, j], array.shape[2], sensivity)
+           queue.put(progress)
 
     progress = height*width
+    queue.put(progress)
     # Save the mask
     saving = True
     out_file = name + "_mask" + str(sensivity)
@@ -141,11 +168,13 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     start = False
 
 
-def changeDetectorFile(path:str, sensivity:int=0.2):
+def changeDetectorFile(q, path:str, sensivity:int=0.2):
     """Calculate the change detector of raster image 
 
     Args:
+
         path (str): Path to the raster image
+        
     """
     # Read raster
     rt, img, err, msg = loadRasterImage(path) 
@@ -153,4 +182,4 @@ def changeDetectorFile(path:str, sensivity:int=0.2):
         print(msg)
         sys.exit(1)
 
-    changeDetector(img, path, rt, sensivity)
+    changeDetector(q, img, path, rt, sensivity)

@@ -13,7 +13,7 @@ import lib.indexes as indexes
 import lib.ACF as ACF
 import lib.changeDetector as changeDetector
 from threading import Thread
-import multiprocessing
+from multiprocessing import Process, Queue
 
 """
 This class is the main class of the program, it is the GUI of the program
@@ -1119,7 +1119,8 @@ class ChangedetectorWin(ctk.CTkFrame):
                 except ValueError:
                     showerror("Error", "The sensitivity must be a number")
                     return
-            self.thd = Thread(target=changeDetector.changeDetectorFile, args=(self.file, sensitivity))
+            q = Queue()
+            self.thd = Process(target=changeDetector.changeDetectorFile, args=(q, self.file, sensitivity))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
@@ -1129,23 +1130,27 @@ class ChangedetectorWin(ctk.CTkFrame):
             self.backBtn.configure(state="disabled")
             self.pb.start()
 
-            while not changeDetector.start:
-                self.update()
-                self.master.update()
-
-            while changeDetector.progress < changeDetector.total:
-                self.percentajeLabel.configure(text=f"{changeDetector.progress}/{changeDetector.total}")
+            # while not changeDetector.start:
+            #     self.update()
+            #     self.master.update()
+            progress = 0
+            total = int(q.get())
+            print(total)
+            while progress < total:
+                percentage = (int(q.get())/total)*100
+                self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
                 self.percentajeLabel.update()
                 self.update()
                 # if not self.thd.is_alive():
                 #     self.error()
                 #     self.master.log()
+                #     self.thd.kill()
                 #     break
 
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()
             
-            while changeDetector.saving:
+            while self.thd.is_alive():
                 self.update()
                 self.master.update()
             # if self.thd.is_alive():
