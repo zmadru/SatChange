@@ -68,11 +68,12 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     # Save as a shpefile
     shapefile = gdal.GetDriverByName('ESRI Shapefile')
     output = shapefile.CreateDataSource(dst+'.shp')
-    layer = output.CreateLayer(dst+'.shp', srs, ogr.wkbPoint)
+    layer = output.CreateLayer(dst+'.shp', geom_type=ogr.wkbMultiPoint)
     feature = layer.GetLayerDefn()
     outfeature = ogr.Feature(feature)
     outfeature.SetGeometry(points)
     layer.CreateFeature(outfeature)
+    outfeature = None
     # output.SetGeoTransform(transform)    
     output = None
 
@@ -107,7 +108,6 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         
     
 
-
 def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     """Calculate the change detector of an array given an array
     
@@ -139,9 +139,6 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     saveSingleBand(out_file, raster, mask, gdal.GDT_Byte, 'GTiff')
     saving = False
     start = False
-
-
-   
 
 
 def changeDetectorFile(path:str, sensivity:int=0.2):
