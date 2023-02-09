@@ -156,33 +156,20 @@ def stack(in_files: list, dir_out: str, out_name: str):
 
 
 ## Main--------------------------------------------------------------
-# def main():
-#     if len(sys.argv) != 3:
-#         print("\nUsage: ",sys.argv[0]," [min year] [max year]")
-#         sys.exit(1)
+def main():
+    if len(sys.argv) != 4:
+        print("\nUsage: ",sys.argv[0],"<stack name> <files directory> <output directory>")
+        sys.exit(1)
 
-#     # Store the range of years
-#     min_year = int(sys.argv[1])
-#     max_year = int(sys.argv[2])
-#     [dir_in, dir_out] = __askDirs()
-#     print("Year range from",min_year,"to",max_year)
-#     print("All correct? (yes/no)")
-#     if input().lower() == "no":
-#         sys.exit(1)
-
-#     if not os.path.exists(dir_out): # if the output directory doesnt exist
-#             os.makedirs(dir_out)    # create the path        
-#             print("     [Output directory created]")
-
-#     start = time.time()
-
-#     stack(min_year, max_year, dir_in, dir_out)
-
-#     end = time.time()
-#     etime = str((end-start)/60).split(".")
-#     print("FINISH: time->",etime[0]+":"+str(int(etime[1])*60)[0:2],"mins, generated stack.tif")
+    stack_name = sys.argv[1]
+    indir = sys.argv[2]
+    outdir = sys.argv[3]    
+    
+    # get the files from the directory
+    files = [f for f in os.listdir(indir) if os.path.isfile(os.path.join(indir, f))]
+    stack(files, outdir, stack_name)
 
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
