@@ -10,6 +10,7 @@ from scipy.ndimage.filters import maximum_filter1d
 import scipy.signal
 import scipy.stats as st
 import statsmodels.tsa.stattools as pc
+from tqdm.contrib import itertools
 
 # Global variables
 progress:int = 0
@@ -81,10 +82,11 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
         tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
         typ (str, optional): Defaults to 'GTiff'. Driver used to save.
     """
+    name, ext = os.path.splitext(dst)
     xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, nlags+1
     transform = rt.GetGeoTransform()
     geotiff = gdal.GetDriverByName(typ)
-    output = geotiff.Create(dst, xsize, ysize, zsize, tt)
+    output = geotiff.Create(f'{name}_BIP{ext}', xsize, ysize, zsize, tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt)
@@ -95,6 +97,8 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
     
     output.SetGeoTransform(transform)
     output.SetProjection(srs.ExportToWkt())
+    output.FlushCache()
+    gdal.Translate(f'{name}_BSQ{ext}', f'{name}_BIP{ext}', format="GTiff", creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
     output = None
 
 # Main
@@ -116,21 +120,21 @@ def ACFtif(path:str, nlags_:int = 364):
         
     start = True
     # Run by depth
-    for i in range(height):
-        for j in range(width):
-            #print(pc.acf(img[i, j, :], nlags=nlags, alpha=0.05))
-            aux[i, j, :] = pc.acf(img[i, j, :], nlags=nlags, alpha=0.05)[0]
-            # aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
-            progress = int((i*width+j)/(height*width)*100)
+    for i, j in itertools.product(range(height), range(width)):
+        #print(pc.acf(img[i, j, :], nlags=nlags, alpha=0.05))
+        aux[i, j, :] = pc.acf(img[i, j, :], nlags=nlags, alpha=0.05)[0]
+        # aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
+        progress = int((i*width+j)/(height*width)*100)
         
     # Remove the first lag (0), because it is always 1
     aux = aux[:, :, 1:]
+    aux = 100 * aux # Convert to integer
                         
     # Save
     saving = True
-    dst = f'{name}_ACF1_L{nlags}{ext}'
+    dst = f'{name}_ACF_L{nlags}{ext}'
     print("Saving in ", dst)
-    saveBand(dst, rt, aux)
+    saveBand(dst, rt, aux, tt=gdal.GDT_Int16)
     out_file = dst
     # dst = f'{name}_PACF1_{ext}'
     # print("Saving in ", dst)
@@ -173,7 +177,7 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     # Save
     saving = True
     out_array = aux
-    out_file = f'{name}_ACF1_L{nlags}{ext}'
+    out_file = f'{name}_ACF_L{nlags}{ext}'
     print("Saving in ", out_file)
     saveBand(out_file, raster, aux)
     rt = raster
@@ -182,5 +186,10 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
 
 
 if __name__ == "__main__":
-    path = r'S:\30TUK\Series\T30TUK_NDVI_2016_2021_CLIP2_int_filt_linear__whitf_'
-    aux3 = ACFtif(path)
+    if len(sys.argv) < 3:
+        print(f"Usage: python3 {__file__} <raster> <nlags>")
+        sys.exit(1)
+        
+    path = sys.argv[1]
+    nlags = int(sys.argv[2])
+    aux3 = ACFtif(path, nlags)

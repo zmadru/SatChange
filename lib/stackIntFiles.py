@@ -23,7 +23,7 @@ import pandas as pd
 from tqdm import tqdm
 
 ## Globals variables----------------------------------------------
-outdata = None  # output data
+# outdata = None  # output data
 total: int = 0
 progress: int = 0
 start: bool = False
@@ -167,8 +167,11 @@ def main():
     outdir = sys.argv[3]    
     
     # get the files from the directory
-    files = [f for f in os.listdir(indir) if os.path.isfile(os.path.join(indir, f))]
-    stack(files, outdir, stack_name)
+    files = pathlib.Path(indir).glob("*.tif")
+    files2 = []
+    for file in files:
+        files2.append(str(file))
+    stack(files2, outdir, stack_name)
 
 
 
