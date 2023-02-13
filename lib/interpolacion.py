@@ -8,6 +8,7 @@ from scipy import interpolate
 from scipy.interpolate import interp1d
 from osgeo import gdal
 from osgeo import osr
+from tqdm.contrib import itertools
 
 # Global variables
 progress:int = 0
@@ -118,10 +119,9 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
 
     # Run by depth
     
-    for i in range(height):
-        for j in range(width):
-                aux[i, j, :] = fill(img[i, j, :], 0, modeInterp)
-                progress = (i * width + j) / (height * width) * 100
+    for i,  j in itertools.product(range(height), range(width)):
+        aux[i, j, :] = fill(img[i, j, :], 0, modeInterp)
+        progress = (i * width + j) / (height * width) * 100
     
     progress = 100
     # Save
@@ -133,7 +133,10 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
 
 
 if __name__ == '__main__':
-    path = "x"
+    if len(sys.argv) < 2:
+        print("Usage: python3 interpolacion.py <path>")
+        sys.exit(1)
+    path = sys.argv[1]
     getFiltRaster(path, modeInterp='linear')
     
 ###en el método de llenado borra todo y deja el que diga 'linear' , es el que mejor se comporta. , 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'
