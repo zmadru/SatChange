@@ -136,7 +136,9 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Usage: python3 interpolacion.py <path>")
         sys.exit(1)
+        
     path = sys.argv[1]
+    print("Path: ", path)
     getFiltRaster(path, modeInterp='linear')
     
 ###en el método de llenado borra todo y deja el que diga 'linear' , es el que mejor se comporta. , 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'
