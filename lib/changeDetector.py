@@ -132,7 +132,7 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         
     
 
-def changeDetector(queue:Queue, array:np.ndarray, path:str, raster, sensivity:int=0.2):
+def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     """Calculate the change detector of an array given an array
     
     Args:
@@ -146,7 +146,6 @@ def changeDetector(queue:Queue, array:np.ndarray, path:str, raster, sensivity:in
     start = True
     total = array.shape[0]*array.shape[1]
     # send the total to the progress bar
-    queue.put(total)
     # Read raster
     height, width = array.shape[:2]
     name, ext = os.path.splitext(path)
@@ -156,10 +155,8 @@ def changeDetector(queue:Queue, array:np.ndarray, path:str, raster, sensivity:in
     for i in range(height):
         for j in range(width):
            checkPixel(i, j, array[i, j], array.shape[2], sensivity)
-           queue.put(progress)
 
     progress = height*width
-    queue.put(progress)
     # Save the mask
     saving = True
     out_file = name + "_mask" + str(sensivity)
@@ -168,7 +165,7 @@ def changeDetector(queue:Queue, array:np.ndarray, path:str, raster, sensivity:in
     start = False
 
 
-def changeDetectorFile(q, path:str, sensivity:int=0.2):
+def changeDetectorFile(path:str, sensivity:int=0.2):
     """Calculate the change detector of raster image 
 
     Args:
@@ -182,4 +179,4 @@ def changeDetectorFile(q, path:str, sensivity:int=0.2):
         print(msg)
         sys.exit(1)
 
-    changeDetector(q, img, path, rt, sensivity)
+    changeDetector(img, path, rt, sensivity)

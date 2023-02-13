@@ -1119,8 +1119,7 @@ class ChangedetectorWin(ctk.CTkFrame):
                 except ValueError:
                     showerror("Error", "The sensitivity must be a number")
                     return
-            q = Queue()
-            self.thd = Process(target=changeDetector.changeDetectorFile, args=(q, self.file, sensitivity))
+            self.thd = Thread(target=changeDetector.changeDetectorFile, args=(self.file, sensitivity))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
@@ -1130,14 +1129,12 @@ class ChangedetectorWin(ctk.CTkFrame):
             self.backBtn.configure(state="disabled")
             self.pb.start()
 
-            # while not changeDetector.start:
-            #     self.update()
-            #     self.master.update()
-            progress = 0
-            total = int(q.get())
-            print(total)
-            while progress < total:
-                percentage = (int(q.get())/total)*100
+            while not changeDetector.start:
+                self.update()
+                self.master.update()
+                
+            while changeDetector.progress < changeDetector.total:
+                percentage = (changeDetector.progress/changeDetector.total)*100
                 self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
                 self.percentajeLabel.update()
                 self.update()
