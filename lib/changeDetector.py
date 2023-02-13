@@ -4,6 +4,7 @@ from osgeo import osr
 from osgeo import ogr
 #import gdal, osr
 import numpy as np
+from tqdm.contrib import itertools
 from multiprocessing import Pool, Queue
 
 # Global variables
@@ -105,7 +106,7 @@ def saveShapefile(dst):
     outFeature = None
     
 
-def checkPixel(i, j, array, length, sensivity:int=0.2):
+def checkPixel(i, j, array, length, sensivity:float=0.2):
     """Check the time serie from a pixel to see if there are an average of 50% of positive and negative values
     
     Args:
@@ -113,7 +114,7 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         j (int): Column
         array (np.ndarray): Time serie of the pixel
         length (int): Length of the time serie
-        sensivity (int, optional): Defaults to 0.2. Sensivity of the change detector
+        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
     """
     global mask, progress
 
@@ -132,12 +133,14 @@ def checkPixel(i, j, array, length, sensivity:int=0.2):
         
     
 
-def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
+def changeDetector(array:np.ndarray, path:str, raster, sensivity:float=0.2):
     """Calculate the change detector of an array given an array
     
     Args:
         array (np.ndarray): Matrix of the raster image autocorrelation
         path (str): Path to the raster image
+        raster (Dataset GDAL object): Object that contains the structure of the raster file
+        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
     """
     global progress, out_file, saving, out_array, start, mask, total
 
@@ -152,9 +155,8 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     mask = np.zeros(array.shape[:2], dtype=np.uint8)
 
     # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
-    for i in range(height):
-        for j in range(width):
-           checkPixel(i, j, array[i, j], array.shape[2], sensivity)
+    for i, j in itertools.product(range(height), range(width)):
+        checkPixel(i, j, array[i, j], array.shape[2], sensivity)
 
     progress = height*width
     # Save the mask
@@ -165,13 +167,13 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:int=0.2):
     start = False
 
 
-def changeDetectorFile(path:str, sensivity:int=0.2):
+def changeDetectorFile(path:str, sensivity:float=0.2):
     """Calculate the change detector of raster image 
 
     Args:
 
         path (str): Path to the raster image
-        
+        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
     """
     # Read raster
     rt, img, err, msg = loadRasterImage(path) 
@@ -180,3 +182,12 @@ def changeDetectorFile(path:str, sensivity:int=0.2):
         sys.exit(1)
 
     changeDetector(img, path, rt, sensivity)
+    
+    
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python3 change_detector.py <file> <sensivity>")
+        print("<file>: path to the raster image, <sensivity>: sensivity of the change detector (between 0 and 1)")
+        sys.exit(1)
+        
+    changeDetectorFile(sys.argv[1], float(sys.argv[2]))

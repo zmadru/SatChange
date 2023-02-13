@@ -13,6 +13,7 @@ import os, sys
 import scipy.stats as st
 from osgeo import gdal
 from osgeo import osr
+from tqdm.contrib import itertools
 
 # Global variables
 progress:int = 0
@@ -143,13 +144,12 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     # Run by depth
     
     start = True
-    for i in range(height):
-        for j in range(width):
-            aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
-            rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
-            # pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
-            pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##
-            progress = int((i * width + j) / (height * width) * 100)
+    for i, j in itertools.product(range(height), range(width)):
+        aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
+        rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
+        # pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
+        pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##
+        progress = int((i * width + j) / (height * width) * 100)
     progress = 100
 
     # Save  
@@ -185,11 +185,10 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str, raster
     start = True
     aux = np.zeros(array.shape)
     rmse = np.zeros((array.shape[0], array.shape[1]))##
-    for i in range(array.shape[0]):
-        for j in range(array.shape[1]):
-            aux[i, j, :] = scipy.signal.savgol_filter(array[i, j, :], window_size, polyorder, deriv=0)
-            rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/array.shape[2])##
-            progress = int((i * array.shape[1] + j) / (array.shape[0] * array.shape[1]) * 100)
+    for i, j in itertools.product(range(array.shape[0]), range(array.shape[1])):
+        aux[i, j, :] = scipy.signal.savgol_filter(array[i, j, :], window_size, polyorder, deriv=0)
+        rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/array.shape[2])##
+        progress = int((i * array.shape[1] + j) / (array.shape[0] * array.shape[1]) * 100)
 
     progress = 100
 
@@ -207,11 +206,13 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str, raster
     saving = False
 
 
-   
 def main():
-    path = "x"
-    window_size = 7
-    polyorder = 2
+    if len(sys.argv) != 4:
+        print(f"Usage: python3 {sys.argv[0]} <path> <window_size> <polyorder>")
+        sys.exit(1)
+    path = sys.argv[1]
+    window_size = int(sys.argv[2])
+    polyorder = int(sys.argv[3])
     getFiltRaster(path, window_size, polyorder)
 
 if __name__ == "__main__":

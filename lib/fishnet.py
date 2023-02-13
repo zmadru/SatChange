@@ -8,6 +8,7 @@ from osgeo import ogr
 from osgeo import gdal
 import sys, os
 from math import ceil
+from tqdm import tqdm
 
 def openRaster(rasterfile):
     """Opens a raster file.
@@ -62,6 +63,7 @@ def createFishnet(raster, nrows, ncols, shpname):
     
     # Create the fields
     countcols = 0
+    pbar = tqdm(total=ncols*nrows)
     while countcols < ncols:
         countcols += 1
 
@@ -90,11 +92,13 @@ def createFishnet(raster, nrows, ncols, shpname):
             # new envelope for next poly
             ringYtop = ringYtop - gridHeight
             ringYbottom = ringYbottom - gridHeight
+            pbar.update(1)
 
         # new envelope for next poly
         ringXleftOrigin = ringXleftOrigin + gridWidth
         ringXrightOrigin = ringXrightOrigin + gridWidth
-        
+    
+    pbar.close()
     outdata = None 
     
 if __name__ == '__main__':
