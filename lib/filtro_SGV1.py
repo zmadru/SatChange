@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #objetivo: Filtra la imagen con el filtro deSavitzky Golay. crea el pearson y rmse
-#autor: Quasar 
-#fecha: marzo 2022
-#version: V1. 
+#autor: Quasar & Diego Madruga
+#fecha: febrero 2023
+#version: V2. 
 
 import threading
 import numpy as np
