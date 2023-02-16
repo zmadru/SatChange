@@ -66,6 +66,10 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff'): ##
     output = None
     # Save as a shpefile
     saveShapefile(dst)
+    proj = rt.GetProjection()
+    prj = open(dst+'.prj', 'w')
+    prj.write(proj)
+    prj.close()
 
 
 def saveShapefile(dst):
