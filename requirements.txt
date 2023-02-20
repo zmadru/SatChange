@@ -4,4 +4,4 @@ customtkinter
 pandas
 matplotlib
 statsmodels
-tkinter
+tqdm
