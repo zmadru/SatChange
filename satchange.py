@@ -806,7 +806,7 @@ class IndexesWindow(ctk.CTkFrame):
         """
         Select the file/files to filter
         """
-        self.file = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.file = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select the file to filter", filetypes=(("Tiff files", "*.tif"), ("HDF5 files", "*.hdf"), ("All files", "*.*")))
         self.fileLabel.configure(state="normal")
         self.fileLabel.delete("0.0", "end")
         if len(self.file) == 1:
@@ -824,7 +824,7 @@ class IndexesWindow(ctk.CTkFrame):
         self.dir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
         self.dirLabel.configure(state="normal")
         self.dirLabel.delete("0.0", "end")
-        self.dirLabel.insert("0", self.dir)
+        self.dirLabel.insert("0.0", self.dir)
         self.dirLabel.configure(state="disabled")
     
     def indexes(self):
@@ -844,7 +844,7 @@ class IndexesWindow(ctk.CTkFrame):
             self.pblabel = ctk.CTkLabel(self, text="0%")
             self.pblabel.grid(row=5, column=0, padx=5, pady=5)
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
-            self.pb.grid(row=5, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
+            self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
             self.startBtn.configure(state="disabled")
             self.backBtn.configure(state="disabled")
             self.pb.start()

@@ -52,7 +52,9 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
     start = True
 
     for file in files:
-        src_file = gdal.Open(file)  # Open de file from de dir_in
+        src_file = gdal.Open(file, gdal.GA_ReadOnly)  # Open de file from de dir_in
+        ext = file.split(".")[-1]  # Get the extension of the file
+        
         # get bands from the file depending on the sensor
         if sensor == "Sentinel 2 (10m)": # bands 4 and 8
             band_red = np.array(src_file.GetRasterBand(3).ReadAsArray().astype('float32')) 
@@ -63,22 +65,29 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         elif sensor == "Sentinel 2 (60m)": # bands 4 and 8b
             band_red = np.array(src_file.GetRasterBand(4).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(8).ReadAsArray().astype('float32'))
+        elif ext == "hdf":
+            aux = src_file.GetSubDatasets()
+            band_red = gdal.Open(aux[0][0]).ReadAsArray()
+            band_nir = gdal.Open(aux[1][0]).ReadAsArray()
         elif sensor in ["Modis", "AVHRR"]: # bands 1 and 2
             band_red = np.array(src_file.GetRasterBand(1).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(2).ReadAsArray().astype('float32'))
 
         # Calculate the NDVI
-        ndvi = np.array((band_nir - band_red) / (band_nir + band_red))
-        del band_red, band_nir, src_file   # Free the variables
+        op1 = band_nir - band_red
+        op2 = band_nir + band_red
+        op2 = np.where(op2 == 0, np.nan, op2)
+        ndvi = np.array( op1 / op2)
+        # del band_red, band_nir, src_file   # Free the variables
         gc.collect()    # Clean the memory
 
         # Save the NDVI
-        name = file.split("/")[-1].split(".")[0]  # Get the name of the file
+        name = file.split("/")[-1].split(".")[:-1]  # Get the name of the file
+        name = "_".join(name)   # Join the name
         print("Calculating the index of the file: ", name)
         driver = gdal.GetDriverByName("GTiff")
         # Create the output file
-        ndviFile = driver.Create(f"{out_dir}/{name}_NDVI.tif", src_file.RasterXSize, src_file.RasterYSize, 1, gdal.GDT_Float32)
-        # add the name to the list of processed files
+        ndviFile = driver.Create(f"{out_dir}/{name}_NDVI.tif", band_nir.shape[1], band_nir.shape[0], 1, gdal.GDT_Float32)
         processed.append(f"{out_dir}/{name}_NDVI.tif")
         ndviFile.GetRasterBand(1).WriteArray(ndvi)  # Write the array to the file
         ndviFile.SetGeoTransform(src_file.GetGeoTransform())  # Set the GeoTransform
@@ -86,8 +95,9 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         ndviFile.FlushCache()  # Flush the cache
         del ndviFile, ndvi  # Free the variables
         gc.collect()    # Clean the memory
-        progress += 1   # Increase the progress
-        return 0
+        progress = (progress + 1)/len(files) * 100
+    progress = 100
+    return 0
 
 
 def nbr(files:list, out_dir:str, sensor:str) -> int:
