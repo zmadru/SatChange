@@ -6,6 +6,8 @@ Calculates the indexes of the given images and sensor.
 import gc
 import numpy as np
 from osgeo import gdal
+from tqdm import tqdm
+import os, sys
 
 #  Global variables
 progress = 0
@@ -26,9 +28,9 @@ def calculateIndex(index:str, files:list, out_dir:str, sensor:str):
         sensor (str): The sensor of the images
     """
 
-    if index == "NDVI":
+    if index.upper() == "NDVI":
         ndvi(files, out_dir, sensor)
-    elif index == "NBR":
+    elif index.upper() == "NBR":
         if nbr(files, out_dir, sensor) == -1:
             print("Cant calculate NBR for the selected sensor")
     else:
@@ -51,7 +53,7 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
     progress = 0
     start = True
 
-    for file in files:
+    for file in tqdm(files, desc="Calculating NDVI"):
         src_file = gdal.Open(file, gdal.GA_ReadOnly)  # Open de file from de dir_in
         ext = file.split(".")[-1]  # Get the extension of the file
         
@@ -65,7 +67,7 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         elif sensor == "Sentinel 2 (60m)": # bands 4 and 8b
             band_red = np.array(src_file.GetRasterBand(4).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(8).ReadAsArray().astype('float32'))
-        elif ext == "hdf":
+        elif sensor == "Modis" and ext == "hdf":
             aux = src_file.GetSubDatasets()
             band_red = gdal.Open(aux[0][0]).ReadAsArray()
             band_nir = gdal.Open(aux[1][0]).ReadAsArray()
@@ -84,7 +86,7 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         # Save the NDVI
         name = file.split("/")[-1].split(".")[:-1]  # Get the name of the file
         name = "_".join(name)   # Join the name
-        print("Calculating the index of the file: ", name)
+        # print("Calculating the index of the file: ", name)
         driver = gdal.GetDriverByName("GTiff")
         # Create the output file
         ndviFile = driver.Create(f"{out_dir}/{name}_NDVI.tif", band_nir.shape[1], band_nir.shape[0], 1, gdal.GDT_Float32)
@@ -116,7 +118,7 @@ def nbr(files:list, out_dir:str, sensor:str) -> int:
     progress = 0
     start = True
 
-    for file in files:
+    for file in tqdm(files, desc="Calculating NBR"):
         src_file = gdal.Open(file)  # Open de file from de dir_in
         # get bands from the file depending on the sensor
         if sensor == "Sentinel 2 (10m)": # bands 2 and 8
@@ -151,7 +153,49 @@ def nbr(files:list, out_dir:str, sensor:str) -> int:
         del nbrFile, nbr  # Free the variables
         gc.collect()    # Clean the memory
         progress += 1   # Increase the progress
-        return 0
+    return 0
 
-        
+def get_files(dir_in:str, ext:str) -> list:
+    """
+    Get the files from the directory depending on the extension.
+    
+    Args:
+        dir_in (str): The input directory
+        ext (str): The extension of the files
+    Returns:
+        files (list): The list of files
+    """
+    files = []
+    for file in os.listdir(dir_in):
+        if file.endswith(ext):
+            files.append(f"{dir_in}/{file}")
+    return files
+
+
+def main():
+    if len(sys.argv) != 6:
+        print(f"Usage: python3 {sys.argv[0]} <dir_in> <dir_out> <index> <sensor> <ext>")
+        sys.exit(1)
+    dir_in = sys.argv[1]
+    dir_out = sys.argv[2]
+    index = sys.argv[3]
+    sensor = sys.argv[4]
+    ext = sys.argv[5]
+    
+    # get the files from the directory depending on the extension
+    files = get_files(dir_in, ext)
+    print("Files to process: ", len(files))
+    print("Index to calculate: ", index.upper())
+    print("Sensor: ", sensor)
+    print("Extension: ", ext)
+    print("Output directory: ", dir_out)
+    print("Confirm? (y/n)")
+    if input() != "y":
+        sys.exit(1)
+    
+    calculateIndex(index, files, dir_out, sensor)
+    print("Done!, the files are in the directory: ", dir_out)
+
+if __name__ == "__main__":
+    main() 
     
