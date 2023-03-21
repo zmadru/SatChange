@@ -135,7 +135,39 @@ def checkPixel(i, j, array, length, sensivity:float=0.2):
     
     progress += 1
         
+
+def checkPixel2(i, j, array):
+    """Check the time serie analizing the frequency spectrum of the pixel with the FFT algorithm
+
+    Args:
+        i (int): Row
+        j (int): Column
+        array (np.array): Time serie of the pixel
+    """
+    global mask, progress
+    fft = np.fft.fft(array)
+    # Simetry analisis
+    try:
+        fft1, fft2 = np.split(fft, 2)
+    except(ValueError):
+        fft1, fft2 = np.split(np.append(fft,fft[-1]), 2)
     
+    max1 = int(np.max(fft1.real)*10**15)
+    max2 = int(np.max(fft2.real)*10**15)
+    min1 = int(np.min(fft1.real)*10**15)
+    min2 = int(np.min(fft2.real)*10**15)
+    
+    simetry = (max1 == min2) and (max2 == min1)
+    
+    # Negative values
+    hasNegative = np.min(fft) < 0
+    
+    if not(simetry and hasNegative):
+        mask[i, j] = 1
+        
+    progress += 1
+        
+
 
 def changeDetector(array:np.ndarray, path:str, raster, sensivity:float=0.2):
     """Calculate the change detector of an array given an array
@@ -161,6 +193,7 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:float=0.2):
     # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
     for i, j in itertools.product(range(height), range(width)):
         checkPixel(i, j, array[i, j], array.shape[2], sensivity)
+        # checkPixel2(i, j, array[i, j])
 
     progress = height*width
     # Save the mask

@@ -67,11 +67,11 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         elif sensor == "Sentinel 2 (60m)": # bands 4 and 8b
             band_red = np.array(src_file.GetRasterBand(4).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(8).ReadAsArray().astype('float32'))
-        elif sensor == "Modis" and ext == "hdf":
+        elif sensor.upper() == "MODIS" and ext == "hdf":
             aux = src_file.GetSubDatasets()
             band_red = gdal.Open(aux[0][0]).ReadAsArray()
             band_nir = gdal.Open(aux[1][0]).ReadAsArray()
-        elif sensor in ["Modis", "AVHRR"]: # bands 1 and 2
+        elif sensor.upper() in ["MODIS", "AVHRR"]: # bands 1 and 2
             band_red = np.array(src_file.GetRasterBand(1).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(2).ReadAsArray().astype('float32'))
 
@@ -167,7 +167,7 @@ def get_files(dir_in:str, ext:str) -> list:
     """
     files = []
     for file in os.listdir(dir_in):
-        if file.endswith(ext):
+        if file.endswith(ext.lower() or ext.upper()):
             files.append(f"{dir_in}/{file}")
     return files
 
@@ -186,8 +186,8 @@ def main():
     files = get_files(dir_in, ext)
     print("Files to process: ", len(files))
     print("Index to calculate: ", index.upper())
-    print("Sensor: ", sensor)
-    print("Extension: ", ext)
+    print("Sensor: ", sensor.upper())
+    print("Extension: ", ext.lower())
     print("Output directory: ", dir_out)
     print("Confirm? (y/n)")
     if input() != "y":
