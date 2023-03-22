@@ -56,6 +56,8 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
     for file in tqdm(files, desc="Calculating NDVI"):
         src_file = gdal.Open(file, gdal.GA_ReadOnly)  # Open de file from de dir_in
         ext = file.split(".")[-1]  # Get the extension of the file
+        projection = src_file.GetProjection()  # Get the projection of the file
+        geotransform = src_file.GetGeoTransform()  # Get the geotransform of the file
         
         # get bands from the file depending on the sensor
         if sensor == "Sentinel 2 (10m)": # bands 4 and 8
@@ -71,6 +73,8 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
             aux = src_file.GetSubDatasets()
             band_red = gdal.Open(aux[0][0]).ReadAsArray()
             band_nir = gdal.Open(aux[1][0]).ReadAsArray()
+            projection = gdal.Open(aux[0][0]).GetProjection()
+            geotransform = gdal.Open(aux[0][0]).GetGeoTransform()
         elif sensor.upper() in ["MODIS", "AVHRR"]: # bands 1 and 2
             band_red = np.array(src_file.GetRasterBand(1).ReadAsArray().astype('float32'))
             band_nir = np.array(src_file.GetRasterBand(2).ReadAsArray().astype('float32'))
@@ -92,8 +96,8 @@ def ndvi(files:list, out_dir:str, sensor:str) -> int:
         ndviFile = driver.Create(f"{out_dir}/{name}_NDVI.tif", band_nir.shape[1], band_nir.shape[0], 1, gdal.GDT_Float32)
         processed.append(f"{out_dir}/{name}_NDVI.tif")
         ndviFile.GetRasterBand(1).WriteArray(ndvi)  # Write the array to the file
-        ndviFile.SetGeoTransform(src_file.GetGeoTransform())  # Set the GeoTransform
-        ndviFile.SetProjection(src_file.GetProjection())  # Set the Projection
+        ndviFile.SetGeoTransform(geotransform)  # Set the GeoTransform
+        ndviFile.SetProjection(projection)  # Set the Projection
         ndviFile.FlushCache()  # Flush the cache
         del ndviFile, ndvi  # Free the variables
         gc.collect()    # Clean the memory
