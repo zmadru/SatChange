@@ -5,7 +5,7 @@ from osgeo import ogr
 #import gdal, osr
 import numpy as np
 from tqdm.contrib import itertools
-from multiprocessing import Pool, Queue
+
 
 # Global variables
 progress:int = 0
@@ -109,76 +109,61 @@ def saveShapefile(dst):
     outLayer.CreateFeature(outFeature)
     outFeature = None
     
-
-def checkPixel(i, j, array, length, sensivity:float=0.2):
-    """Check the time serie from a pixel to see if there are an average of 50% of positive and negative values
     
-    Args:
-        i (int): Row
-        j (int): Column
-        array (np.ndarray): Time serie of the pixel
-        length (int): Length of the time serie
-        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
-    """
-    global mask, progress
-
-    positives, negatives = 0, 0
-    for k in range(length):
-        if array[k] > 0:
-            positives += 1
-        else:
-            negatives += 1
-
-    # If the average of the positive and negatives values is near to fifty (40, 60), the pixel is not considered as a change
-    if positives/length < sensivity or negatives/length < sensivity:
-        mask[i, j] = 1
     
-    progress += 1
-        
-
-def checkPixel2(i, j, array):
-    """Check the time serie analizing the frequency spectrum of the pixel with the FFT algorithm
+def checkPixel(i, j, array, numfilesyear:int):
+    """Check the time serie analizing the maximun and minimun functions
 
     Args:
         i (int): Row
         j (int): Column
         array (np.array): Time serie of the pixel
+        numfilesyear (int): Number of files per year
     """
     global mask, progress
-    fft = np.fft.fft(array)
-    # Simetry analisis
-    try:
-        fft1, fft2 = np.split(fft, 2)
-    except(ValueError):
-        fft1, fft2 = np.split(np.append(fft,fft[-1]), 2)
     
-    max1 = int(np.max(fft1.real)*10**15)
-    max2 = int(np.max(fft2.real)*10**15)
-    min1 = int(np.min(fft1.real)*10**15)
-    min2 = int(np.min(fft2.real)*10**15)
+    n = len(array) // numfilesyear
+    halfyear = numfilesyear // 2
     
-    simetry = (max1 == min2) and (max2 == min1)
+    minini = array[halfyear-1]
     
-    # Negative values
-    hasNegative = np.min(fft) < 0
-    
-    if not(simetry and hasNegative):
+    minlast = array[(halfyear-1)+numfilesyear*(n-1)]
+    if (minini - minlast) >= 10:
         mask[i, j] = 1
         
+    progress += 1
+    
+def checkPixel2(i, j, array):
+    """Analize the upper and lower limits of the time serie
+
+    Args:
+        i (_type_): _description_
+        j (_type_): _description_
+        array (_type_): _description_
+    """
+    global mask, progress
+    
+    std = np.std(array)
+    upperlimit = np.mean(array) + 2*std
+    lowerlimit = np.mean(array) - 2*std
+    
+    if np.where(array > upperlimit)[0].size < 0 or np.where(array < lowerlimit)[0].size < 0:
+        mask[i, j] = 1
+    
     progress += 1
         
 
 
-def changeDetector(array:np.ndarray, path:str, raster, sensivity:float=0.2):
+def changeDetector(array:np.ndarray, path:str, raster, numfilesyear:int):
     """Calculate the change detector of an array given an array
     
     Args:
         array (np.ndarray): Matrix of the raster image autocorrelation
         path (str): Path to the raster image
         raster (Dataset GDAL object): Object that contains the structure of the raster file
-        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
+        numfilesyear (int): Number of files per year
     """
-    global progress, out_file, saving, out_array, start, mask, total
+    global progress, out_file, saving, out_array, start, mask, total, mask2
 
     progress = 0
     saving = False
@@ -189,28 +174,29 @@ def changeDetector(array:np.ndarray, path:str, raster, sensivity:float=0.2):
     height, width = array.shape[:2]
     name, ext = os.path.splitext(path)
     mask = np.zeros(array.shape[:2], dtype=np.uint8)
-
+    
     # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
     for i, j in itertools.product(range(height), range(width)):
-        checkPixel(i, j, array[i, j], array.shape[2], sensivity)
-        # checkPixel2(i, j, array[i, j])
+        checkPixel(i, j, array[i, j], numfilesyear)
 
     progress = height*width
     # Save the mask
     saving = True
-    out_file = name + "_mask" + str(sensivity)
+    out_file = name + "_mask"
+    # saveSingleBand(out_file+str(sensivity), raster, mask, gdal.GDT_Byte, 'GTiff')
     saveSingleBand(out_file, raster, mask, gdal.GDT_Byte, 'GTiff')
+    
     saving = False
     start = False
 
 
-def changeDetectorFile(path:str, sensivity:float=0.2):
+def changeDetectorFile(path:str, cicle:int):
     """Calculate the change detector of raster image 
 
     Args:
 
         path (str): Path to the raster image
-        sensivity (float, optional): Defaults to 0.2. Sensivity of the change detector
+        cicly (int): Number of files per year
     """
     # Read raster
     rt, img, err, msg = loadRasterImage(path) 
@@ -218,13 +204,13 @@ def changeDetectorFile(path:str, sensivity:float=0.2):
         print(msg)
         sys.exit(1)
 
-    changeDetector(img, path, rt, sensivity)
+    changeDetector(img, path, rt, cicle)
     
     
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python3 change_detector.py <file> <sensivity>")
-        print("<file>: path to the raster image, <sensivity>: sensivity of the change detector (between 0 and 1)")
+        print("Usage: python3 change_detector.py <file> <numfilesyear>")
+        print("<file>: path to the raster image, <numfilesyear>: number of files per year")
         sys.exit(1)
         
-    changeDetectorFile(sys.argv[1], float(sys.argv[2]))
+    changeDetectorFile(sys.argv[1], int(sys.argv[2]))

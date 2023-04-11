@@ -1074,7 +1074,7 @@ class ChangedetectorWin(ctk.CTkFrame):
         """
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
-        self.senEntry = ctk.CTkEntry(self, placeholder_text="Enter the sensitivity, 0.2 by default")
+        self.senEntry = ctk.CTkEntry(self, placeholder_text="Enter the cicle of the signal, 46 default")
         self.senEntry.grid(row=2, column=1, padx=10, pady=10, columnspan=2, sticky="ew")
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.changedetection)
         self.startBtn.grid(row=3, column=1, padx=10, pady=10)
@@ -1112,14 +1112,14 @@ class ChangedetectorWin(ctk.CTkFrame):
             showerror("Error", "No input file selected")
         else:
             if self.senEntry.get() == "":
-                sensitivity = 0.2
+                cicle = 46
             else:
                 try:
-                    sensitivity = float(self.senEntry.get())
+                    cicle = int(self.senEntry.get())
                 except ValueError:
-                    showerror("Error", "The sensitivity must be a number")
+                    showerror("Error", "The cicle must be a number")
                     return
-            self.thd = Thread(target=changeDetector.changeDetectorFile, args=(self.file, sensitivity))
+            self.thd = Thread(target=changeDetector.changeDetectorFile, args=(self.file, cicle))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
