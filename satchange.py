@@ -18,7 +18,7 @@ from multiprocessing import Process, Queue
 """
 This class is the main class of the program, it is the GUI of the program
     Author: Diego Madruga Ramos
-    version: 0.1
+    version: 2.0
 """
 # Global variables
 dir_out: str = ""
@@ -39,7 +39,9 @@ class App(ctk.CTk):
         """
         super().__init__()
         self.title("Satchange")
-        self.iconphoto(True, tk.PhotoImage(file="img/satelliteicon.png"))
+        # img = tk.PhotoImage(file="img\LogoApp.png")
+        # self.iconphoto(False, img)
+        self.iconbitmap("img\LogoAppTrans.ico")
         self.resizable(0, 0)
         self.geometry("720x350")
         self.create_widgets()
