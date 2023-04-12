@@ -1287,9 +1287,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.autoEntry.grid(row=5, column=2, padx=5, pady=5, sticky="ew")
 
         # changedetection configuration sensivility
-        self.senslabel = ctk.CTkLabel(self.configFrame, text="Sensibility")
+        self.senslabel = ctk.CTkLabel(self.configFrame, text="Image Cicle")
         self.senslabel.grid(row=6, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.sensEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Sensibility, default 0.2")
+        self.sensEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of images per year, default 46")
         self.sensEntry.grid(row=6, column=2, padx=5, pady=5, sticky="ew")
 
 
@@ -1310,12 +1310,12 @@ class NewProcessWin(ctk.CTkFrame):
             showerror("Error", "The number of lags must be a number")
         else:
             if self.sensEntry.get() == "":
-                self.sens = 0.2
+                self.sens = 46
             else:
                 try:
-                   self.sens = float(self.sensEntry.get())
+                   self.sens = int(self.sensEntry.get())
                 except ValueError:
-                    showerror("Error", "The sensibility must be a number")
+                    showerror("Error", "The cicle must be an integer number")
             # ask for confirmation before starting the process
             if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
                 self.startprocess()
