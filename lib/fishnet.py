@@ -100,6 +100,21 @@ def createFishnet(raster, nrows, ncols, shpname):
     
     pbar.close()
     outdata = None 
+
+def fishnetfile(rasterfile, nrows, ncols, shpname):
+    """Creates a fishnet shapefile from a raster file, with nrows and ncols.
+
+    Args:
+        rasterfile (str): path to the raster file
+        nrows (int): number of rows
+        ncols (int): number of columns
+        shpname (str): name of the output shapefile
+    """
+    # Open the raster file
+    raster = openRaster(rasterfile)
+    
+    # Create the fishnet
+    createFishnet(raster, nrows, ncols, shpname)
     
 if __name__ == '__main__':
     if(len(sys.argv) != 5):

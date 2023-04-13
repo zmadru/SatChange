@@ -12,6 +12,7 @@ import lib.filtro_SGV1 as filtro
 import lib.indexes as indexes
 import lib.ACF as ACF
 import lib.changeDetector as changeDetector
+from lib.extraWindows import *
 from threading import Thread
 from multiprocessing import Process, Queue
 
@@ -54,6 +55,7 @@ class App(ctk.CTk):
         self.autowin = AcWindow(self)
         self.changewin = ChangedetectorWin(self)
         self.newwin = NewProcessWin(self)
+        self.fishnetwin = Fishnet(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -82,6 +84,13 @@ class App(ctk.CTk):
         self.file_menu.add_command(label="Filter", command=self.filter)
         self.file_menu.add_command(label="Autocorrelation", command=self.autocorrelation)
         self.file_menu.add_command(label="Change detection", command=self.changedetector)
+        
+        # Adicional manu for new processes 
+        self.newoptions = tk.Menu(self.menu)
+        self.menu.add_cascade(label="Extra processes", menu=self.newoptions)
+        self.newoptions.add_command(label="Fishnet", command=self.fishnet)
+        self.newoptions.add_command(label="Cut time series",)
+        self.newoptions.add_command(label="Cut image", )
 
         # add help entry
         self.help_menu = tk.Menu(self.menu)
@@ -103,7 +112,7 @@ class App(ctk.CTk):
         """
         Show the about message
         """
-        showinfo("About", "Satchange is a program to detect ground change using satellite images")
+        showinfo("About", "Satchange is a program to detect ground changes using satellite images")
 
 
     def log(self):
@@ -135,6 +144,7 @@ class App(ctk.CTk):
         self.autowin.pack_forget()
         self.changewin.pack_forget()
         self.newwin.pack_forget()
+        self.fishnetwin.pack_forget()
         
 
     def index(self):
@@ -203,6 +213,13 @@ class App(ctk.CTk):
         """
         self.unpackAll()
         self.newwin.pack(expand=True, fill="both", padx=10, pady=10)
+    
+    def fishnet(self):
+        """
+        Show the fishnet window
+        """
+        self.unpackAll()
+        self.fishnetwin.pack(expand=True, fill="both", padx=10, pady=10)
     
 class IndexWindow(ctk.CTkFrame):
     """
