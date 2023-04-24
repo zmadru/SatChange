@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 import os, sys
 import lib.fishnet as fishnet
+from tkinter import messagebox
 
 class Fishnet(ctk.CTkFrame):
     """Fishnet window
@@ -55,7 +56,23 @@ class Fishnet(ctk.CTkFrame):
             self.fileentry.configure(state="disabled")
         
     def run(self):
-        pass
+        shapename = self.shapenameentry.get()
+        cols = self.columsentry.get()
+        rows = self.rowsentry.get()
+        file = self.fileentry.get(0.0, "end")
+        if shapename and cols and rows and file:
+            self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
+            self.pb.start()
+            self.runbtn.configure(state="disabled")
+            self.cancelbtn.configure(state="disabled")
+            self.selectbtn.configure(state="disabled")
+            self.shapenameentry.configure(state="disabled")
+            self.columsentry.configure(state="disabled")
+            self.rowsentry.configure(state="disabled")
+            self.fileentry.configure(state="disabled")
+            fishnet.fishnetfile(file,rows,cols,shapename,)
+        else:
+            messagebox.showerror("Error", "Please fill all the fields")
     
     def back(self):
         self.master.index()
