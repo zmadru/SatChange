@@ -1,8 +1,9 @@
 import customtkinter as ctk
 from tkinter import filedialog
 import os, sys
-import lib.fishnet as fishnet
+import lib.fishnetdirs as fn
 from tkinter import messagebox
+from threading import Thread
 
 class Fishnet(ctk.CTkFrame):
     """Fishnet window
@@ -28,19 +29,26 @@ class Fishnet(ctk.CTkFrame):
         self.shapenameentry = ctk.CTkEntry(self, justify="center", placeholder_text="Shapefile name")
         self.shapenameentry.grid(row=1, column=3, padx=5, pady=5, sticky="we")
         
+        self.outdirbtn = ctk.CTkButton(self, text="Output directory", command=self.outdir)
+        self.outdirbtn.grid(row=2, column=0, padx=5, pady=5)
+        self.outentry = ctk.CTkTextbox(self, width=45, height=22)
+        self.outentry.insert(0.0, "No directory selected")
+        self.outentry.configure(state="disabled")
+        self.outentry.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
         self.columslabel = ctk.CTkLabel(self, text="Columns")
-        self.columslabel.grid(row=2, column=0, padx=5, pady=5)
+        self.columslabel.grid(row=3, column=0, padx=5, pady=5)
         self.columsentry = ctk.CTkEntry(self, justify="center")
-        self.columsentry.grid(row=2, column=1, padx=5, pady=5, sticky="we")
+        self.columsentry.grid(row=3, column=1, padx=5, pady=5, sticky="we")
         self.rowslabel = ctk.CTkLabel(self, text="Rows")
-        self.rowslabel.grid(row=2, column=2, padx=5, pady=5)
+        self.rowslabel.grid(row=3, column=2, padx=5, pady=5)
         self.rowsentry = ctk.CTkEntry(self, justify="center")
-        self.rowsentry.grid(row=2, column=3, padx=5, pady=5, sticky="we")
+        self.rowsentry.grid(row=3, column=3, padx=5, pady=5, sticky="we")
         
         self.runbtn = ctk.CTkButton(self, text="Run", command=self.run)
-        self.runbtn.grid(row=3, column=1, padx=5, pady=5)
+        self.runbtn.grid(row=4, column=1, padx=5, pady=5)
         self.cancelbtn = ctk.CTkButton(self, text="Cancel", command=self.back)
-        self.cancelbtn.grid(row=3, column=3, padx=5, pady=5)        
+        self.cancelbtn.grid(row=4, column=3, padx=5, pady=5)        
         
         self.pb = ctk.CTkProgressBar(self, mode="determinate")
         self.pb.set(0)
@@ -54,13 +62,29 @@ class Fishnet(ctk.CTkFrame):
             self.fileentry.delete(0.0, "end")
             self.fileentry.insert(0.0, self.file)
             self.fileentry.configure(state="disabled")
+            
+    def outdir(self):
+        self.dirout = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
+        if self.dirout:
+            self.outentry.configure(state="normal")
+            self.outentry.delete(0.0, "end")
+            self.outentry.insert(0.0, self.dirout)
+            self.outentry.configure(state="disabled")
+            
         
     def run(self):
         shapename = self.shapenameentry.get()
-        cols = self.columsentry.get()
-        rows = self.rowsentry.get()
-        file = self.fileentry.get(0.0, "end")
-        if shapename and cols and rows and file:
+        if shapename.split(".")[-1] != "shp":
+            shapename = shapename+".shp"
+        try:
+            int(self.columsentry.get())
+            int(self.rowsentry.get())
+        except ValueError:
+            messagebox.showerror("Error", "Columns and rows must be integers")
+            return
+        cols = int(self.columsentry.get())
+        rows = int(self.rowsentry.get())
+        if shapename and cols and rows and self.file:
             self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
             self.pb.start()
             self.runbtn.configure(state="disabled")
@@ -70,7 +94,20 @@ class Fishnet(ctk.CTkFrame):
             self.columsentry.configure(state="disabled")
             self.rowsentry.configure(state="disabled")
             self.fileentry.configure(state="disabled")
-            fishnet.fishnetfile(file,rows,cols,shapename,)
+            thd = Thread(target=fn.fishnetfile, args=(self.file, cols, rows, shapename, self.dirout))
+            thd.start()
+            
+            while thd.is_alive():
+                self.update()
+                
+            self.pb.stop()
+            messagebox.showinfo("Satchange", "Fishnet completed, the result is next to the input file in the same folder")
+            self.runbtn.configure(state="normal")
+            self.cancelbtn.configure(state="normal")
+            self.selectbtn.configure(state="normal")
+            self.shapenameentry.configure(state="normal")
+            self.columsentry.configure(state="normal")
+            self.rowsentry.configure(state="normal")
         else:
             messagebox.showerror("Error", "Please fill all the fields")
     

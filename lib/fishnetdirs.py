@@ -26,7 +26,7 @@ def openRaster(rasterfile):
         sys.exit(1)
     return raster
 
-def createFishnet(raster, nrows, ncols, shpname):
+def createFishnet(raster, nrows, ncols, shpname, outputDir):
     """
     Creates a fishnet shapefile from a raster file, with nrows and ncols.
 
@@ -37,6 +37,7 @@ def createFishnet(raster, nrows, ncols, shpname):
         shpname (str): name of the output shapefile
     """
     geoTransform = raster.GetGeoTransform()
+    proj = raster.GetProjection()
     
     # Get the raster's extent
     xmin = geoTransform[0]
@@ -56,14 +57,18 @@ def createFishnet(raster, nrows, ncols, shpname):
     # Create the shapefile
     outDriver = ogr.GetDriverByName("ESRI Shapefile")
     name, ext = os.path.splitext(shpname)
-    os.mkdir(name)
-    outdata = outDriver.CreateDataSource(name+'/'+shpname)
-    outLayer = outdata.CreateLayer(name+'/'+shpname, geom_type=ogr.wkbPolygon)
+    try:
+        os.mkdir(outputDir+'/'+name)
+    except OSError:
+        pass
+    outdata = outDriver.CreateDataSource(outputDir+'/'+name+'/'+name)
+    outLayer = outdata.CreateLayer(name, geom_type=ogr.wkbPolygon)
     layerDfn = outLayer.GetLayerDefn()
     
     # Create the fields
     countcols = 0
-    pbar = tqdm(total=ncols*nrows)
+    cont = 0
+    # bar = tqdm(total=ncols*nrows)
     while countcols < ncols:
         countcols += 1
 
@@ -74,6 +79,8 @@ def createFishnet(raster, nrows, ncols, shpname):
 
         while countrows < nrows:
             countrows += 1
+            cont += 1
+            
             ring = ogr.Geometry(ogr.wkbLinearRing)
             ring.AddPoint(ringXleftOrigin, ringYtop)
             ring.AddPoint(ringXrightOrigin, ringYtop)
@@ -88,20 +95,39 @@ def createFishnet(raster, nrows, ncols, shpname):
             outFeature.SetGeometry(poly)
             outLayer.CreateFeature(outFeature)
             outFeature = None
+            
+            # save the new geo as a new shapefile
+            aux = outDriver.CreateDataSource(outputDir+'/'+name+'/'+name+'_C'+str(cont))
+            auxLayer = aux.CreateLayer(name+'_C'+str(cont), geom_type=ogr.wkbPolygon)
+            auxDfn = auxLayer.GetLayerDefn()
+            auxFeature = ogr.Feature(auxDfn)
+            auxFeature.SetGeometry(poly)
+            auxLayer.CreateFeature(auxFeature)
+            auxFeature = None
+            # create the prj file
+            prj = open(outputDir+'/'+name+'/'+name+'_C'+str(cont)+'/'+name+'_C'+str(cont)+'.prj', 'w')
+            prj.write(proj)
+            prj.close()
+            # cut the raster with the shapefile
+            # dst = f'{outputDir}/{name}/{rasterfile}_C{cont}.tif'
+            # shape = outputDir+'/'+name+'/'+name+'_C'+str(cont)+'/'+name+'_C'+str(cont)+'.shp'
+            # gdal.Warp(dst, raster, cutlineDSName=shape, cropToCutline=True)
 
             # new envelope for next poly
             ringYtop = ringYtop - gridHeight
             ringYbottom = ringYbottom - gridHeight
-            pbar.update(1)
+            # bar.update(1)
 
         # new envelope for next poly
         ringXleftOrigin = ringXleftOrigin + gridWidth
         ringXrightOrigin = ringXrightOrigin + gridWidth
-    
-    pbar.close()
-    outdata = None 
+        
+    outdata = None
+    prj = open(outputDir+'/'+name+'/'+name+'/'+name+'.prj', 'w')
+    prj.write(proj)
+    prj.close()    
 
-def fishnetfile(rasterfile, nrows, ncols, shpname, outdir):
+def fishnetfile(rasterfile, nrows, ncols, shpname, outputDir):
     """Creates a fishnet shapefile from a raster file, with nrows and ncols.
 
     Args:
@@ -110,15 +136,12 @@ def fishnetfile(rasterfile, nrows, ncols, shpname, outdir):
         ncols (int): number of columns
         shpname (str): name of the output shapefile
     """
-    # Open the raster file
     raster = openRaster(rasterfile)
-    
-    # Create the fishnet
-    createFishnet(raster, nrows, ncols, shpname=outdir+'/'+shpname)
+    createFishnet(raster, nrows, ncols, shpname, outputDir)
     
 if __name__ == '__main__':
-    if(len(sys.argv) != 5):
-        print("Usage: fishnet.py <inputfile> <nRows> <nColums> <ShapefileName>")
+    if(len(sys.argv) != 6):
+        print("Usage: fishnet.py <inputfile> <nRows> <nColums> <ShapefileName> <outputDir>")
         sys.exit(1)
 
     rasterfile = sys.argv[1]
@@ -127,15 +150,16 @@ if __name__ == '__main__':
         ncols = int(sys.argv[3])
     except:
         print("nRows and nCols must be integers")
-        print("Usage: fishnet.py <inputfile> <nRows> <nColums> <ShapefileName>")
+        print("Usage: fishnet.py <inputfile> <nRows> <nColums> <ShapefileName> <outputDir>")
         sys.exit(1)
     shpname = sys.argv[4]
+    outputDir = sys.argv[5]
     
     # Open the raster file
     raster = openRaster(rasterfile)
     
     # Create the fishnet
-    createFishnet(raster, nrows, ncols, shpname)
+    createFishnet(raster, nrows, ncols, shpname, outputDir)
     
     
     
