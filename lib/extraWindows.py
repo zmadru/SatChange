@@ -1,9 +1,12 @@
+from typing import Optional, Tuple, Union
 import customtkinter as ctk
 from tkinter import filedialog
 import os, sys
 import lib.fishnetdirs as fn
+import lib.split as sp
 from tkinter import messagebox
 from threading import Thread
+from osgeo import gdal
 
 class Fishnet(ctk.CTkFrame):
     """Fishnet window
@@ -113,3 +116,55 @@ class Fishnet(ctk.CTkFrame):
     
     def back(self):
         self.master.index()
+        
+class CutTimeSerie(ctk.CTkFrame):
+    
+    def __init__(self, master, **kwargs):
+        ctk.CTkFrame.__init__(self, master, **kwargs)
+        self.master = master
+        self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
+        self.createWidgets()
+        
+    def createWidgets(self):
+        self.titlelabel = ctk.CTkLabel(self, text="Cut time serie", font=("Helvetica", 36, "bold"))
+        self.titlelabel.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        
+        self.selectbtn = ctk.CTkButton(self, text="Select file", command=self.select)
+        self.selectbtn.grid(row=1, column=0, padx=5, pady=5)
+        self.fileentry = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileentry.insert(0.0, "No file selected")
+        self.fileentry.configure(state="disabled")
+        self.fileentry.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
+        self.nbanslabel = ctk.CTkLabel(self, text="Number of bands")
+        self.nbanslabel.grid(row=2, column=0, padx=5, pady=5)
+        self.nbansentry = ctk.CTkEntry(self, justify="center")
+        self.nbansentry.grid(row=2, column=1, padx=5, pady=5, sticky="we")
+        self.nbansentry.configure(state="disabled")
+        
+        self.bandcutentry = ctk.CTkEntry(self, justify="center", placeholder_text="Band to cut")
+        self.bandcutentry.grid(row=2, column=2, padx=5, pady=5, sticky="we")
+        self.bandcutentry.configure(state="disabled")
+        
+    
+    def select(self):
+        self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input file", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        raster = gdal.Open(self.file)
+        if raster:
+            nbands = raster.RasterCount
+            self.bandcutentry.configure(state="normal")
+            
+        self.nbansentry.configure(state="normal")
+        self.nbansentry.delete(0, "end")
+        self.nbansentry.insert(0, nbands)
+        self.nbansentry.configure(state="disabled")
+        
+        self.fileentry.configure(state="normal")
+        self.fileentry.delete(0.0, "end")
+        self.fileentry.insert(0.0, self.file)
+        self.fileentry.configure(state="disabled")
+        
+        
+        
+    

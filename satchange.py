@@ -56,6 +56,7 @@ class App(ctk.CTk):
         self.changewin = ChangedetectorWin(self)
         self.newwin = NewProcessWin(self)
         self.fishnetwin = Fishnet(self)
+        self.cuttimeseriewin = CutTimeSerie(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -89,7 +90,7 @@ class App(ctk.CTk):
         self.newoptions = tk.Menu(self.menu)
         self.menu.add_cascade(label="Extra processes", menu=self.newoptions)
         self.newoptions.add_command(label="Fishnet", command=self.fishnet)
-        self.newoptions.add_command(label="Cut time series",)
+        self.newoptions.add_command(label="Cut time series",command=self.cutTimeSeries)
         self.newoptions.add_command(label="Cut image", )
 
         # add help entry
@@ -145,6 +146,7 @@ class App(ctk.CTk):
         self.changewin.pack_forget()
         self.newwin.pack_forget()
         self.fishnetwin.pack_forget()
+        self.cuttimeseriewin.pack_forget()
         
 
     def index(self):
@@ -220,6 +222,14 @@ class App(ctk.CTk):
         """
         self.unpackAll()
         self.fishnetwin.pack(expand=True, fill="both", padx=10, pady=10)
+        
+    def cutTimeSeries(self):
+        """
+        Show the cut time series window
+        """
+        self.unpackAll()
+        self.cuttimeseriewin.pack(expand=True, fill="both", padx=10, pady=10)
+        
     
 class IndexWindow(ctk.CTkFrame):
     """
