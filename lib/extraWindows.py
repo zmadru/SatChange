@@ -118,7 +118,9 @@ class Fishnet(ctk.CTkFrame):
         self.master.index()
         
 class CutTimeSerie(ctk.CTkFrame):
-    
+    """
+    Class for the cut time serie window
+    """
     def __init__(self, master, **kwargs):
         ctk.CTkFrame.__init__(self, master, **kwargs)
         self.master = master
