@@ -11,16 +11,6 @@ def cut(raster, shapefile, output):
     """
     gdal.Warp(output, raster, cutlineDSName=shapefile, cropToCutline=True)
 
-def cutfiles(raster, shapefile, output):
-    """Cuts a raster file with a shapefile.
-
-    Args:
-        raster (str): path to the raster file
-        shapefile (str): path to the shapefile
-        output (str): path to the output file
-    """
-    gdal.Warp(output, raster, cutlineDSName=shapefile, cropToCutline=True)
-
 def main():
     if len(sys.argv) < 4:
         print("Usage: python cutImage.py [options] <rasterfile> <shapefilesDir> <ncuts>")

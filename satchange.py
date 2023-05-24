@@ -57,6 +57,7 @@ class App(ctk.CTk):
         self.newwin = NewProcessWin(self)
         self.fishnetwin = Fishnet(self)
         self.cuttimeseriewin = CutTimeSerie(self)
+        self.cutrasterwin = CutRaster(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -91,7 +92,7 @@ class App(ctk.CTk):
         self.menu.add_cascade(label="Extra processes", menu=self.newoptions)
         self.newoptions.add_command(label="Fishnet", command=self.fishnet)
         self.newoptions.add_command(label="Cut time series",command=self.cutTimeSeries)
-        self.newoptions.add_command(label="Cut image", )
+        self.newoptions.add_command(label="Cut raster", command=self.cutRaster)
 
         # add help entry
         self.help_menu = tk.Menu(self.menu)
@@ -147,6 +148,7 @@ class App(ctk.CTk):
         self.newwin.pack_forget()
         self.fishnetwin.pack_forget()
         self.cuttimeseriewin.pack_forget()
+        self.cutrasterwin.pack_forget()
         
 
     def index(self):
@@ -229,6 +231,13 @@ class App(ctk.CTk):
         """
         self.unpackAll()
         self.cuttimeseriewin.pack(expand=True, fill="both", padx=10, pady=10)
+        
+    def cutRaster(self):
+        """
+        Show the cut raster window
+        """
+        self.unpackAll()
+        self.cutrasterwin.pack(expand=True, fill="both", padx=10, pady=10)
         
     
 class IndexWindow(ctk.CTkFrame):

@@ -149,6 +149,15 @@ class CutTimeSerie(ctk.CTkFrame):
         self.bandcutentry.grid(row=2, column=2, padx=5, pady=5, sticky="we")
         self.bandcutentry.configure(state="disabled")
         
+        self.runbtn = ctk.CTkButton(self, text="Run", command=self.run)
+        self.runbtn.grid(row=3, column=1, padx=5, pady=5)
+        self.cancelbtn = ctk.CTkButton(self, text="Cancel", command=self.back)
+        self.cancelbtn.grid(row=3, column=2, padx=5, pady=5)
+        
+        self.pb = ctk.CTkProgressBar(self, mode="determinate")
+        self.pb.set(0)
+        self.pb.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="we")
+        
     
     def select(self):
         self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input file", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
@@ -166,6 +175,75 @@ class CutTimeSerie(ctk.CTkFrame):
         self.fileentry.delete(0.0, "end")
         self.fileentry.insert(0.0, self.file)
         self.fileentry.configure(state="disabled")
+        
+    def run(self):
+        if self.file and self.bandcutentry.get():
+            try:
+                int(self.bandcutentry.get())
+            except ValueError:
+                messagebox.showerror("Error", "Band to cut must be an integer")
+                return
+            self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
+            self.pb.start()
+            self.runbtn.configure(state="disabled")
+            self.cancelbtn.configure(state="disabled")
+            self.selectbtn.configure(state="disabled")
+            self.bandcutentry.configure(state="disabled")
+            thd = Thread(target=sp.splitfile, args=(self.file, int(self.bandcutentry.get())))
+            thd.start()
+            
+            while thd.is_alive():
+                self.update()
+                
+            self.pb.stop()
+            messagebox.showinfo("Satchange", "Cut time serie completed, the result is next to the input file in the same folder")
+            self.runbtn.configure(state="normal")
+            self.cancelbtn.configure(state="normal")
+            self.selectbtn.configure(state="normal")
+            self.bandcutentry.configure(state="normal")
+        else:
+            messagebox.showerror("Error", "Please fill all the fields")
+            
+    def back(self):
+        self.master.index()
+        
+class CutRaster(ctk.CTkFrame):
+    """
+    Cut raster window
+    """
+    
+    def __init__(self, master, **kwargs):
+        ctk.CTkFrame.__init__(self, master, **kwargs)
+        self.master = master
+        self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
+        self.createWidgets()
+        
+    def createWidgets(self):
+        self.titlelabel = ctk.CTkLabel(self, text="Cut raster", font=("Helvetica", 36, "bold"))
+        self.titlelabel.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        
+        self.selectrasterbtn = ctk.CTkButton(self, text="Select raster", command=self.selectraster)
+        self.selectrasterbtn.grid(row=1, column=0, padx=5, pady=5)
+        self.rasterentry = ctk.CTkTextbox(self, width=45, height=22)
+        self.rasterentry.insert(0.0, "No raster selected")
+        self.rasterentry.configure(state="disabled")
+        self.rasterentry.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
+        self.selectshpfilebtn = ctk.CTkButton(self, text="Select shapefile", command=self.selectshpfile)
+        self.selectshpfilebtn.grid(row=2, column=0, padx=5, pady=5)
+        self.shpfileentry = ctk.CTkTextbox(self, width=45, height=22)
+        self.shpfileentry.insert(0.0, "No shapefile selected")
+        self.shpfileentry.configure(state="disabled")
+        self.shpfileentry.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
+    def selectraster(self):
+        self.pathraster = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input raster", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.rasterentry.configure(state="normal")
+        self.rasterentry.delete(0.0, "end")
+        self.rasterentry.insert(0.0, self.pathraster)
+        self.rasterentry.configure(state="disabled")
+        
         
         
         
