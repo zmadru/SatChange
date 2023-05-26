@@ -237,12 +237,33 @@ class CutRaster(ctk.CTkFrame):
         self.shpfileentry.configure(state="disabled")
         self.shpfileentry.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="we")
         
+        self.runbtn = ctk.CTkButton(self, text="Run", command=self.run)
+        self.runbtn.grid(row=3, column=1, padx=5, pady=5)
+        self.cancelbtn = ctk.CTkButton(self, text="Cancel", command=self.back)
+        self.cancelbtn.grid(row=3, column=2, padx=5, pady=5)
+        self.pb = ctk.CTkProgressBar(self, mode="determinate")
+        self.pb.set(0)
+        self.pb.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="we")
+        
     def selectraster(self):
         self.pathraster = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input raster", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
         self.rasterentry.configure(state="normal")
         self.rasterentry.delete(0.0, "end")
         self.rasterentry.insert(0.0, self.pathraster)
         self.rasterentry.configure(state="disabled")
+        
+    def selectshpfile(self):
+        self.pathshp = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input shapefile", filetypes=(("Shapefile files", "*.shp"), ("All files", "*.*")))
+        self.shpfileentry.configure(state="normal")
+        self.shpfileentry.delete(0.0, "end")
+        self.shpfileentry.insert(0.0, self.pathshp)
+        self.shpfileentry.configure(state="disabled")
+        
+    def run(self):
+        pass
+    
+    def back(self):
+        self.master.index()
         
         
         
