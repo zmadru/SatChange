@@ -1,7 +1,7 @@
-import filtro_SGV1 as SGV1
-import filtro_MAX as MAX
-import filtro_FFT as FFT
-import filtro_Whit as Whit
+import lib.filtro_SGV1 as SGV1
+import lib.filtro_MAX as MAX
+import lib.filtro_FFT as FFT
+import lib.filtro_Whit as Whit
 import numpy as np
 
 # global variables
