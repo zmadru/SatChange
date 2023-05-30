@@ -8,7 +8,7 @@ import os
 from tkinter.messagebox import askyesno, showerror, showinfo
 import lib.stackIntFiles as stackInt
 import lib.interpolacion as interpolacion
-import lib.filtro_SGV1 as filtro
+import lib.filtro as filtro
 import lib.indexes as indexes
 import lib.ACF as ACF
 import lib.changeDetector as changeDetector
@@ -681,7 +681,7 @@ class FilterWindow(ctk.CTkFrame):
         """
         self.labelSelect = ctk.CTkLabel(self, text="Select the mode ->")
         self.labelSelect.grid(row=2, column=0, padx=5, pady=5)
-        self.modeSelect = ctk.CTkOptionMenu(self, values=["SGV"], state="readonly")
+        self.modeSelect = ctk.CTkOptionMenu(self, values=["SGV","FFT","MAX","WHIT"], state="readonly")
         self.modeSelect.grid(row=2, column=1, padx=10, pady=10 )
         self.modeSelect.set("SGV")
 
@@ -705,7 +705,9 @@ class FilterWindow(ctk.CTkFrame):
         if self.file == "":
             showerror("Error", "You must select a file")
         else:
-            self.thd = Thread(target=filtro.getFiltRaster, args=(self.file, 3, 2))
+            
+            self.thd = Thread(target=filtro.getFiltRaster, args=(self.file, self.modeSelect.get()))
+                
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.percentajeLabel = ctk.CTkLabel(self, justify="right", text="0%")
@@ -715,14 +717,14 @@ class FilterWindow(ctk.CTkFrame):
             self.percentajeLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
             self.pb.start()
 
-            while not filtro.start:
+            while not filtro.getStart():
                 self.update()
                 self.master.update()
 
-            while filtro.progress < 100:
-                self.percentajeLabel.configure(text=str(filtro.progress).split(".")[0]+"%")
+            while filtro.getProgress() < 100:
+                self.percentajeLabel.configure(text=str(filtro.getProgress()).split(".")[0]+"%")
                 self.update()
-                if not self.thd.is_alive() and filtro.progress < 100:
+                if not self.thd.is_alive() and filtro.getProgress() < 100:
                     self.error()
                     self.master.log()
                     break
@@ -730,7 +732,7 @@ class FilterWindow(ctk.CTkFrame):
             self.percentajeLabel.configure(text="Saving...")
             self.percentajeLabel.update()            
 
-            while(filtro.saving):
+            while(filtro.getSaving()):
                 self.update()
                 self.master.update()
             
@@ -743,9 +745,9 @@ class FilterWindow(ctk.CTkFrame):
             self.backBtn.configure(state='normal')
             
             if self.solo:
-                showinfo("Satchange", "The process has finished, "+filtro.out_file+" has been created")
+                showinfo("Satchange", "The process has finished, "+filtro.getOutFile()+" has been created")
             else:
-                dir_out = filtro.out_file   
+                dir_out = filtro.getOutFile()   
             
     def error(self):
         """
@@ -1313,7 +1315,7 @@ class NewProcessWin(ctk.CTkFrame):
         # filter configuration
         self.filterLabel = ctk.CTkLabel(self.configFrame, text="Filter configuration")
         self.filterLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.modeSelect = ctk.CTkOptionMenu(self.configFrame, values=["SGV"], state="readonly")
+        self.modeSelect = ctk.CTkOptionMenu(self.configFrame, values=["SGV", "MAX", "FFT", "WHIT"], state="readonly")
         self.modeSelect.grid(row=4, column=2, padx=5, pady=5)
 
         # autocorrelation configuration
@@ -1620,16 +1622,16 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Filtering")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=filtro.getFilter, args=(interpolacion.array, 3, 2, interpolacion.out_file, interpolacion.rt))
+        thread = Thread(target=filtro.getFilter, args=(interpolacion.array,self.modeSelect.get(),interpolacion.out_file, interpolacion.rt))
         # thread = Thread(target=filtro.getFiltRaster, args=(self.infiles, 3, 2))
         thread.start()
 
-        while not filtro.start:
+        while not filtro.getStart():
             self.update()
             self.master.update()
             
-        while filtro.progress < 100:
-            self.percentagelabel.configure(text=str(filtro.progress).split('.')[0] + "%")
+        while filtro.getProgress() < 100:
+            self.percentagelabel.configure(text=str(filtro.getProgress()).split('.')[0] + "%")
             self.update()
             # if not thread.is_alive():
             #     self.error()
@@ -1638,7 +1640,7 @@ class NewProcessWin(ctk.CTkFrame):
 
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        while filtro.saving == True:
+        while filtro.getSaving == True:
             self.update()
             
         if thread.is_alive():

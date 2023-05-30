@@ -5,6 +5,15 @@ import pandas as pd
 import scipy.stats as st
 from tqdm.contrib import itertools
 
+# global variables
+progress:int = 0
+out_file:str = ""
+saving:bool = False
+start:bool = False
+out_array:np.ndarray = None
+
+rt = None
+
 def loadRasterImage(path):
     """ 
     Load a raster image from disk to memory
@@ -17,14 +26,17 @@ def loadRasterImage(path):
         (boolean): Indicates that if there is an error
         (str): Indicates the associated error message
     """
+    global rt
     raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
     if raster_ds is None:
         return None, None, True, "The file cannot be opened."
     print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
     print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
     if raster_ds.RasterCount == 1:
+        rt = raster_ds
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
+        rt = raster_ds
         return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
     
 def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
@@ -122,6 +134,16 @@ def filtFinal(df):
 
 
 def getFiltRaster(path):
+    """
+    Method that applies the filter to a raster image with the Max method
+    
+    Args:
+        path (str): Path to input file
+    """
+    global progress, out_file, saving, start, rt
+    progress = 0
+    saving = False 
+    
     name, ext = os.path.splitext(path)
     # Read raster
     rt, img, err, msg = loadRasterImage(path)
@@ -142,13 +164,18 @@ def getFiltRaster(path):
 
     # Run by depth
     cont = 0
+    start = True
     for i, j in itertools.product(range(height), range(width)):
             aux[i, j, :] = filtFinal(pd.DataFrame(columns=['NDVI'],  data=img[i, j, :]))
             rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
             pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##
+            progress = int((i*width + j) * 100 / (height*width))
+    progress = 100
             
     # Save
+    saving = True
     dst = name + '_max' + ext
+    out_file = dst
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
     dst = f'{name}_maxrmse_{ext}'
@@ -157,7 +184,59 @@ def getFiltRaster(path):
     dst = f'{name}_maxpearson_{ext}'
     print("Saving in ", dst)
     saveSingleBand(dst, rt, pearson)##
+    saving = False
     
+def getFilter(array:np.array, path:str, raster):
+    """
+    Method that applies the filter to an array with the Max method
+    
+    Args:
+        array (np.array): Array to apply the filter
+        path (str): Path to input file
+        raster (Dataset GDAL object): Object that contains the structure of the raster file
+    """
+    global progress, out_file, saving, start, rt, out_array
+    progress = 0
+    saving = False 
+    
+    name, ext = os.path.splitext(path)
+
+    # Auxiliar
+    aux = np.zeros(array.shape)
+
+    # Dims
+    height, width, depth = array.shape
+    rmse = np.zeros((height, width))##
+    pearson = np.zeros((height, width))##
+
+    # Init pandas
+    df = pd.DataFrame(columns=['NDVI'])
+
+    # Run by depth
+    cont = 0
+    start = True
+    for i, j in itertools.product(range(height), range(width)):
+            aux[i, j, :] = filtFinal(pd.DataFrame(columns=['NDVI'],  data=array[i, j, :]))
+            rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/depth)##
+            pearson[i, j] = st.pearsonr(array[i, j, :], aux[i, j, :])[0]##
+            progress = int((i*width + j) * 100 / (height*width))
+    progress = 100
+            
+    # Save
+    saving = True
+    dst = name + '_max' + ext
+    out_file = dst
+    out_array = aux
+    print("Saving in ", dst)
+    saveBand(dst, rt, aux)
+    dst = f'{name}_maxrmse_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, rmse)##
+    dst = f'{name}_maxpearson_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, pearson)##
+    saving = False
+    rt= raster
     
 def main():
     if len(sys.argv) < 2:

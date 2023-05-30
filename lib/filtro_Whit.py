@@ -18,6 +18,15 @@ from osgeo import gdal
 from osgeo import osr 
 from tqdm.contrib import itertools
 
+#  global variables
+progress:int = 0
+out_file:str = ""
+saving:bool = False
+start:bool = False
+out_array:np.ndarray = None
+
+rt = None
+
 
 def speyediff(N, d, format='csc'):
     """
@@ -85,14 +94,18 @@ def loadRasterImage(path):
         (boolean): Indicates that if there is an error
         (str): Indicates the associated error message
     """
+    global rt
+    
     raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
     if raster_ds is None:
         return None, None, True, "The file cannot be opened."
     print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
     print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
     if raster_ds.RasterCount == 1:
+        rt = raster_ds
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
+        rt = raster_ds
         return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
 
 
@@ -150,6 +163,16 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):##
 
 # Main
 def getFiltRaster(path):
+    """
+    Apply Whittaker filter to a raster image
+    
+    Args:
+        path (str): Path to file
+    """
+    global progress, out_file, saving, start, rt
+    progress = 0
+    saving = False
+    
     name, ext = os.path.splitext(path)
     # Read raster
     rt, img, err, msg = loadRasterImage(path)
@@ -168,13 +191,17 @@ def getFiltRaster(path):
     # Run by depth
     lmbd = int(depth * 0.1) # 10% of the depth
     print("Lambda: ", lmbd)
+    start = True
     for i, j in itertools.product(range(height), range(width)):
         aux[i, j, :] = whittaker_smooth(img[i, j, :], lmbd, d=2)
         rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
-        pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]  
+        pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0] 
+        progress = int((i*width + j) * 100 / (height*width))
+    progress = 100
     # Save
-
+    saving = True
     dst = f'{name}_whitf_{ext}'
+    out_file = dst
     print("Saving in ", dst)
     saveBand(dst, rt, aux)
     dst = f'{name}_whitrmse_{ext}'
@@ -183,7 +210,52 @@ def getFiltRaster(path):
     dst = f'{name}_whitpearson_{ext}'
     print("Saving in ", dst)
     saveSingleBand(dst, rt, pearson)##
+    saving = False
     
+
+def getFilter(array:np.array, path:str, raster):
+    """Apply Whittaker filter to an array
+
+    Args:
+        array (np.array): Matrix to be filtered
+        path (str): Path to output file
+        raster (gdalDataSet): Raster object
+    """
+    
+    global progress, out_file, saving, start, rt, out_array
+    progress = 0
+    saving = False
+    
+    name, ext = os.path.splitext(path)
+    
+    # Process
+    height, width, depth = array.shape
+    aux = np.zeros(array.shape)
+    rmse = np.zeros(array.shape)##
+    pearson = np.zeros(array.shape)##
+    
+    start = True
+    for i, j in itertools.product(range(height), range(width)):
+        aux[i, j, :] = whittaker_smooth(array[i, j, :], 2, d=2)
+        rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/depth)
+        pearson[i, j] = st.pearsonr(array[i, j, :], aux[i, j, :])[0]
+        progress = int((i*width + j) * 100 / (height*width))
+    progress = 100
+    
+    saving = True
+    dst = f'{name}_whitf_{ext}'
+    out_file = dst
+    out_array = aux
+    print("Saving in ", dst)
+    saveBand(dst, rt, aux)
+    dst = f'{name}_whitrmse_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, rmse)##
+    dst = f'{name}_whitpearson_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, pearson)##
+    saving = False
+    rt = raster
     
     
 if __name__ == '__main__':
