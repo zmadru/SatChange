@@ -1,4 +1,3 @@
-from typing import Optional, Tuple, Union
 import customtkinter as ctk
 from tkinter import filedialog
 import os, sys
@@ -7,6 +6,9 @@ import lib.split as sp
 from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal
+import numpy as np
+import geemap, ee
+import tkintermapview as tkmap
 
 class Fishnet(ctk.CTkFrame):
     """Fishnet window
@@ -264,6 +266,46 @@ class CutRaster(ctk.CTkFrame):
     
     def back(self):
         self.master.index()
+        
+        
+class DownLoadImages(ctk.CTkFrame):
+    """Window to download images from the internet,
+    it uses the Google Earth Engine API"""
+    
+    def __init__(self, master, **kwargs):
+        ctk.CTkFrame.__init__(self, master, **kwargs)
+        self.master = master
+        self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
+        self.createWidgets()
+        
+    def createWidgets(self):
+        self.nameLabel = ctk.CTkLabel(self, text="Download images", font=("Helvetica", 36, "bold"))
+        self.nameLabel.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        
+        self.openmapbtn = ctk.CTkButton(self, text="Open map", command=self.openmap)
+        self.openmapbtn.grid(row=1, column=0, padx=5, pady=5)
+        
+        
+    def openmap(self):
+        self.toplevel = ctk.CTkToplevel(self.master)
+        self.toplevel.title("Map")
+        self.toplevel.geometry("800x600")
+        self.toplevel.resizable(0,0)
+        self.toplevel.focus_set()
+        self.mapframe = ctk.CTkFrame(self.toplevel)
+        self.mapframe.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.mapframe.grid_columnconfigure((0,1,2,3,4,5), weight=1)
+        self.mapframe.pack(fill="both", expand=True)
+        
+        
+        self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=15)
+        self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)  # google satellite
+        self.map.grid(row=1, column=1, padx=5, pady=5, columnspan=4, rowspan=4, sticky="nswe")
+        self.mapframe.mainloop()
+       
+        
+        
         
         
         

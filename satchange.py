@@ -58,6 +58,7 @@ class App(ctk.CTk):
         self.fishnetwin = Fishnet(self)
         self.cuttimeseriewin = CutTimeSerie(self)
         self.cutrasterwin = CutRaster(self)
+        self.downloadwin = DownLoadImages(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -93,6 +94,9 @@ class App(ctk.CTk):
         self.newoptions.add_command(label="Fishnet", command=self.fishnet)
         self.newoptions.add_command(label="Cut time series",command=self.cutTimeSeries)
         self.newoptions.add_command(label="Cut raster", command=self.cutRaster)
+        
+        # Add Download menu
+        self.menu.add_command(label="Download", command=self.download)
 
         # add help entry
         self.help_menu = tk.Menu(self.menu)
@@ -149,6 +153,7 @@ class App(ctk.CTk):
         self.fishnetwin.pack_forget()
         self.cuttimeseriewin.pack_forget()
         self.cutrasterwin.pack_forget()
+        self.downloadwin.pack_forget()
         
 
     def index(self):
@@ -238,6 +243,13 @@ class App(ctk.CTk):
         """
         self.unpackAll()
         self.cutrasterwin.pack(expand=True, fill="both", padx=10, pady=10)
+        
+    def download(self):
+        """
+        Show the download window
+        """
+        self.unpackAll()
+        self.downloadwin.pack(expand=True, fill="both", padx=10, pady=10)
         
     
 class IndexWindow(ctk.CTkFrame):
