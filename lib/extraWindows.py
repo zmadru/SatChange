@@ -3,6 +3,7 @@ from tkinter import filedialog
 import os, sys
 import lib.fishnetdirs as fn
 import lib.split as sp
+import lib.cutImage as ci
 from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal
@@ -217,7 +218,7 @@ class CutRaster(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         ctk.CTkFrame.__init__(self, master, **kwargs)
         self.master = master
-        self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.grid_rowconfigure((0,1,2,3,4,5,6,7), weight=1)
         self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
         self.createWidgets()
         
@@ -239,13 +240,24 @@ class CutRaster(ctk.CTkFrame):
         self.shpfileentry.configure(state="disabled")
         self.shpfileentry.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="we")
         
+        
+        self.outdirbtn = ctk.CTkButton(self, text="Select output directory", command=self.selectoutdir)
+        self.outdirbtn.grid(row=3, column=0, padx=5, pady=5)
+        self.outdirEntry = ctk.CTkTextbox(self, width=45, height=22)
+        self.outdirEntry.insert(0.0, "No output directory selected")
+        self.outdirEntry.configure(state="disabled")
+        self.outdirEntry.grid(row=3, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
+        self.outfilenameEntry = ctk.CTkEntry(self, placeholder_text="Output filename", justify="center")
+        self.outfilenameEntry.grid(row=4, column=1, padx=5, pady=5, sticky="we")        
+        
         self.runbtn = ctk.CTkButton(self, text="Run", command=self.run)
-        self.runbtn.grid(row=3, column=1, padx=5, pady=5)
+        self.runbtn.grid(row=5, column=1, padx=5, pady=5)
         self.cancelbtn = ctk.CTkButton(self, text="Cancel", command=self.back)
-        self.cancelbtn.grid(row=3, column=2, padx=5, pady=5)
+        self.cancelbtn.grid(row=5, column=2, padx=5, pady=5)
         self.pb = ctk.CTkProgressBar(self, mode="determinate")
         self.pb.set(0)
-        self.pb.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="we")
+        self.pb.grid(row=6, column=1, columnspan=3, padx=5, pady=5, sticky="we")
         
     def selectraster(self):
         self.pathraster = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input raster", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
@@ -261,8 +273,31 @@ class CutRaster(ctk.CTkFrame):
         self.shpfileentry.insert(0.0, self.pathshp)
         self.shpfileentry.configure(state="disabled")
         
+    def selectoutdir(self):
+        self.pathoutdir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
+        self.outdirEntry.configure(state="normal")
+        self.outdirEntry.delete(0, "end")
+        self.outdirEntry.insert(0, self.pathoutdir)
+        self.outdirEntry.configure(state="disabled")
+        
     def run(self):
-        pass
+        if self.pathraster and self.pathshp:
+            filename = os.path.join(self.pathoutdir, self.outfilenameEntry.get())
+            self.pb.start()
+            self.runbtn.configure(state="disabled")
+            self.cancelbtn.configure(state="disabled")
+            thd = Thread(target=ci.cut, args=(self.pathraster, self.pathshp, filename))
+            thd.start()
+            
+            while thd.is_alive() and ci.running:
+                self.update()
+                
+            self.pb.stop()
+            messagebox.showinfo("Satchange", f"Cut raster completed, the result {filename} has been saved")
+            self.runbtn.configure(state="normal")
+            self.cancelbtn.configure(state="normal")
+        else:
+            messagebox.showerror("Error", "Please fill all the fields")
     
     def back(self):
         self.master.index()
@@ -303,6 +338,7 @@ class DownLoadImages(ctk.CTkFrame):
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)  # google satellite
         self.map.grid(row=1, column=1, padx=5, pady=5, columnspan=4, rowspan=4, sticky="nswe")
         self.mapframe.mainloop()
+        
        
         
         

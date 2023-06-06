@@ -2,6 +2,9 @@ from osgeo import gdal
 import sys, os
 from tqdm import tqdm
 
+#  global variables
+running:bool = False
+
 def cut(raster, shapefile, output):
     """Cuts a raster file with a shapefile.
 
@@ -10,7 +13,10 @@ def cut(raster, shapefile, output):
         shapefile (str): path to the shapefile
         output (str): path to the output file
     """
+    global running
+    running = True
     gdal.Warp(output, raster, cutlineDSName=shapefile, cropToCutline=True)
+    running = False
 
 def cutfiles(raster, shapefilesdir, output):
     """Cuts a raster file with a shapefile.
