@@ -6,7 +6,7 @@ import lib.split as sp
 import lib.cutImage as ci
 from tkinter import messagebox
 from threading import Thread
-from osgeo import gdal
+from osgeo import gdal, ogr, osr
 import numpy as np
 import geemap, ee
 import tkintermapview as tkmap
@@ -328,16 +328,49 @@ class DownLoadImages(ctk.CTkFrame):
         self.toplevel.geometry("800x600")
         self.toplevel.resizable(0,0)
         self.toplevel.focus_set()
+        self.toplevel.grid_columnconfigure((0,1,2,3), weight=1)
+        self.toplevel.grid_rowconfigure((0,1,2,3,4), weight=1)
         self.mapframe = ctk.CTkFrame(self.toplevel)
-        self.mapframe.grid_rowconfigure((0,1,2,3,4,5), weight=1)
-        self.mapframe.grid_columnconfigure((0,1,2,3,4,5), weight=1)
-        self.mapframe.pack(fill="both", expand=True)
+        self.mapframe.grid_rowconfigure((0,1,2,3,4), weight=1)
+        self.mapframe.grid_columnconfigure((0,1,2,3,4), weight=1)
+        self.mapframe.grid(row=0, column=1, padx=5, pady=5, sticky="nswe", columnspan=3, rowspan=5)
+        
+        self.configframe = ctk.CTkFrame(self.toplevel)
+        self.configframe.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9,10), weight=1)
+        self.configframe.grid_columnconfigure((0), weight=1)
+        self.configframe.grid(row=0, column=0, padx=5, pady=5, sticky="nswe", columnspan=1, rowspan=5)
+        self.coodinatesEntry = ctk.CTkEntry(self.configframe, placeholder_text="Coordinates (35.2115, -12.65)", justify="center")
+        self.coodinatesEntry.grid(row=0, column=0, padx=5, pady=5, sticky="we")
+        self.coordinatesbtn = ctk.CTkButton(self.configframe, text="Set coordinates", command=self.setcoordinates)
+        self.coordinatesbtn.grid(row=1, column=0, padx=5, pady=5, sticky="we")
+        
+        self.loadtshpbtn = ctk.CTkButton(self.configframe, text="Load shapefile", command=self.selectshpfile)
+        self.loadtshpbtn.grid(row=2, column=0, padx=5, pady=5, sticky="we")
         
         
-        self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=15)
-        self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)  # google satellite
-        self.map.grid(row=1, column=1, padx=5, pady=5, columnspan=4, rowspan=4, sticky="nswe")
+        self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=10)
+        self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=12)  # google satellite
+        self.map.grid(row=0, column=0, padx=5, pady=5, columnspan=5, rowspan=5, sticky="nswe")
         self.mapframe.mainloop()
+        
+    def setcoordinates(self):
+        self.coordinates = self.coodinatesEntry.get()
+        if self.coordinates:
+            x = float(self.coordinates.split(",")[0])
+            y = float(self.coordinates.split(",")[1])
+            self.map.set_position(x, y)
+            
+    def selectshpfile(self):
+        self.pathshp = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input shapefile", filetypes=(("Shapefile files", "*.shp"), ("All files", "*.*")))
+        # load the shapefile in the map, getting the list of coordinates of the polygons
+        shp = gdal.Open(self.pathshp)
+        
+        shpcoords = []
+        
+        for i in range(shp.GetLayer().GetFeatureCount()):
+            shpcoords.append(shp.GetLayer().GetFeature(i).GetGeometryRef().GetPoints())
+            
+        self.map.add_polygon(shpcoords, fill_color="#ff0000", fill_opacity=0.5, stroke_color="#ff0000", stroke_opacity=0.5)
         
        
         
