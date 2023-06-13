@@ -173,13 +173,24 @@ def changeDetector(array:np.ndarray, path:str, raster, numfilesyear:int):
     # Read raster
     height, width = array.shape[:2]
     name, ext = os.path.splitext(path)
-    mask = np.zeros(array.shape[:2], dtype=np.uint8)
+    # mask = np.zeros(array.shape[:2], dtype=np.uint8)
     
-    # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
-    for i, j in itertools.product(range(height), range(width)):
-        checkPixel(i, j, array[i, j], numfilesyear)
+    # # take the time pixel by pixel and check if the average of the positive and negatives values is near to fifty
+    # for i, j in itertools.product(range(height), range(width)):
+    #     checkPixel(i, j, array[i, j], numfilesyear)
+    n = array.shape[2] // 2
+    fhalf = array[:, :, :n]
+    shalf = array[:, :, n:]
 
-    progress = height*width
+    fhalf = np.sum(fhalf, axis=2)
+    shalf = np.sum(shalf, axis=2)
+
+    result = fhalf - shalf
+    result = result/10000
+    mask = np.where(result >= 0.165, 1, result)
+    mask = np.where(mask < 0.165, 0, mask)
+
+    progress = 100
     # Save the mask
     saving = True
     out_file = name + "_mask"
