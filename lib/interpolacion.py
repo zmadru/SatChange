@@ -58,7 +58,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):
     saving = True
     xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
     transform = rt.GetGeoTransform()
-    geotiff = gdal.GetDriverByName(typ)
+    geotiff = rt.GetDriver()
     output = geotiff.Create(dst, xsize, ysize, zsize, tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
@@ -92,7 +92,7 @@ def fill(A, value, method):
 
 
 # Main
-def getFiltRaster(path:str, modeInterp:str='linear'):
+def getFiltRaster(path:str, modeInterp:str='linear', saveformat:str='int16'):
     """Method to filter a raster image
 
     Args:
@@ -127,18 +127,27 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # Save
     dst = f'{name}_filt_{modeInterp}_{ext}'
     out_file = dst
-    array = aux.astype(np.int16)
     print("Saving in ", dst)
-    saveBand(dst, rt, aux)
+    if saveformat == 'float32':
+        array = aux.astype(np.float32)
+        saveBand(dst, rt, aux, tt=gdal.GDT_Float32)
+    else:
+        aux = aux * 10000
+        array = aux.astype(np.int16)
+        saveBand(dst, rt, aux, tt=gdal.GDT_Int16)
+        
+    
+    
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python3 interpolacion.py <path>")
+        print("Usage: python3 interpolacion.py <path> <saveformat>\n<path>: Path to raster image\n <saveformat>: Format to save the raster image(int16, float32)")
         sys.exit(1)
         
     path = sys.argv[1]
+    saveformat = sys.argv[2]
     print("Path: ", path)
-    getFiltRaster(path, modeInterp='linear')
+    getFiltRaster(path, modeInterp='linear',saveformat=saveformat)
     
 ###en el método de llenado borra todo y deja el que diga 'linear' , es el que mejor se comporta. , 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'

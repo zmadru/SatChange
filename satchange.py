@@ -553,6 +553,9 @@ class InterpolationWindow(ctk.CTkFrame):
         self.modeSelect = ctk.CTkOptionMenu(self, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'])
         self.modeSelect.grid(row=2, column=1, sticky="we", padx=10, pady=10)
         self.modeSelect.set("linear")
+        self.formatSelect = ctk.CTkOptionMenu(self, values=['int16','float32'])
+        self.formatSelect.grid(row=2, column=2, sticky="we", padx=10, pady=10)
+        self.formatSelect.set("int16")
         
     def select(self):
         """
@@ -574,7 +577,7 @@ class InterpolationWindow(ctk.CTkFrame):
         if self.file == "":
             showerror("Error", "You must select a file")
         else:
-            self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get()))
+            self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get(), self.formatSelect.get()))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.percentajeLabel = ctk.CTkLabel(self, justify="right", text="0%")
@@ -1127,7 +1130,7 @@ class ChangedetectorWin(ctk.CTkFrame):
         self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
         self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
         self.senEntry = ctk.CTkEntry(self, placeholder_text="Enter the cicle of the signal, 46 default")
-        self.senEntry.grid(row=2, column=1, padx=10, pady=10, columnspan=2, sticky="ew")
+        # self.senEntry.grid(row=2, column=1, padx=10, pady=10, columnspan=2, sticky="ew")
         self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.changedetection)
         self.startBtn.grid(row=3, column=1, padx=10, pady=10)
         self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
@@ -1185,10 +1188,7 @@ class ChangedetectorWin(ctk.CTkFrame):
                 self.update()
                 self.master.update()
                 
-            while changeDetector.progress < changeDetector.total:
-                percentage = (changeDetector.progress/changeDetector.total)*100
-                self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
-                self.percentajeLabel.update()
+            while changeDetector.progress < 100:
                 self.update()
                 # if not self.thd.is_alive():
                 #     self.error()
@@ -1323,6 +1323,8 @@ class NewProcessWin(ctk.CTkFrame):
         self.interpLabel.grid(row=3, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.modeInter = ctk.CTkOptionMenu(self.configFrame, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'])
         self.modeInter.grid(row=3, column=2, padx=5, pady=5)
+        self.formatSelect = ctk.CTkOptionMenu(self.configFrame, values=["int16","float32"])
+        self.formatSelect.grid(row=3, column=3, padx=5, pady=5)
 
         # filter configuration
         self.filterLabel = ctk.CTkLabel(self.configFrame, text="Filter configuration")
@@ -1335,12 +1337,6 @@ class NewProcessWin(ctk.CTkFrame):
         self.autolabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.autoEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of lags")
         self.autoEntry.grid(row=5, column=2, padx=5, pady=5, sticky="ew")
-
-        # changedetection configuration sensivility
-        self.senslabel = ctk.CTkLabel(self.configFrame, text="Image Cicle")
-        self.senslabel.grid(row=6, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.sensEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of images per year, default 46")
-        self.sensEntry.grid(row=6, column=2, padx=5, pady=5, sticky="ew")
 
 
 
@@ -1359,13 +1355,6 @@ class NewProcessWin(ctk.CTkFrame):
         elif self.autoEntry.get().isdecimal() == False:
             showerror("Error", "The number of lags must be a number")
         else:
-            if self.sensEntry.get() == "":
-                self.sens = 46
-            else:
-                try:
-                   self.sens = int(self.sensEntry.get())
-                except ValueError:
-                    showerror("Error", "The cicle must be an integer number")
             # ask for confirmation before starting the process
             if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
                 self.startprocess()
@@ -1603,9 +1592,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.configure(state="disabled")
 
         if self.stackSwitch.get() == True:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get()))
+            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get(), self.formatSelect.get()))
         else:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
+            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get(), self.formatSelect.get()))
         thread.start()
 
         while interpolacion.progress < 100:
@@ -1701,16 +1690,17 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating change detection")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt, self.sens))
+        thread = Thread(target=changeDetector.changeDetectorFile, args=(str(ACF.out_file),0))
         thread.start()
 
         while not changeDetector.start:
             self.update()
             self.master.update()
 
-        while changeDetector.progress < changeDetector.total:
-            percentage = (changeDetector.progress/changeDetector.total)*100
-            self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
+        self.percentagelabel.configure(text="Processing...")
+        while changeDetector.progress < 100:
+            # percentage = (changeDetector.progress/changeDetector.total)*100
+            # self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
             self.update()
             
         self.percentagelabel.configure(text="Saving...")

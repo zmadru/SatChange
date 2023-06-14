@@ -10,7 +10,7 @@ def split(raster, bandcut):
     filename = raster.GetDescription().split("/")[-1].split(".")[0]
     
     # create the first part
-    driver = gdal.GetDriverByName("GTiff")
+    driver = raster.GetDriver()
     name = filename + f"_1-{bandcut}.tif"
     outfile = driver.Create(name, raster.RasterXSize, raster.RasterYSize, bandcut, gdal.GDT_Int16)
     cont = 0

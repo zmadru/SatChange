@@ -154,7 +154,7 @@ def checkPixel2(i, j, array):
         
 
 
-def changeDetector(array:np.ndarray, path:str, raster, numfilesyear:int):
+def changeDetector(array:np.ndarray, path:str, raster):
     """Calculate the change detector of an array given an array
     
     Args:
@@ -201,13 +201,11 @@ def changeDetector(array:np.ndarray, path:str, raster, numfilesyear:int):
     start = False
 
 
-def changeDetectorFile(path:str, cicle:int):
+def changeDetectorFile(path:str, numfilesyear):
     """Calculate the change detector of raster image 
 
     Args:
-
         path (str): Path to the raster image
-        cicly (int): Number of files per year
     """
     # Read raster
     rt, img, err, msg = loadRasterImage(path) 
@@ -215,13 +213,13 @@ def changeDetectorFile(path:str, cicle:int):
         print(msg)
         sys.exit(1)
 
-    changeDetector(img, path, rt, cicle)
+    changeDetector(img, path, rt)
     
     
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python3 change_detector.py <file> <numfilesyear>")
-        print("<file>: path to the raster image, <numfilesyear>: number of files per year")
+        print("Usage: python3 change_detector.py <file>")
+        print("<file>: path to the raster image")
         sys.exit(1)
         
-    changeDetectorFile(sys.argv[1], int(sys.argv[2]))
+    changeDetectorFile(sys.argv[1], 2)

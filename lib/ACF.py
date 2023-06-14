@@ -14,7 +14,7 @@ from tqdm.contrib import itertools
 
 # Global variables
 progress:int = 0
-out_file = None
+out_file:str = ''
 saving:bool = False
 start:bool = False
 out_array:np.ndarray = None
@@ -82,11 +82,14 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Float32, typ='GTiff', nodata=-999):##
         tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
         typ (str, optional): Defaults to 'GTiff'. Driver used to save.
     """
+    global out_file
     name, ext = os.path.splitext(dst)
     xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, nlags+1
     transform = rt.GetGeoTransform()
-    geotiff = gdal.GetDriverByName(typ)
+    geotiff = rt.GetDriver()
     output = geotiff.Create(f'{name}_BIP{ext}', xsize, ysize, zsize, tt)
+    out_file = f'{name}_BIP{ext}'
+    print("Saving in ", out_file)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt)
@@ -174,12 +177,13 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     
     # Remove the first lag (0), because it is always 1
     aux = aux[:, :, 1:]
-
+    aux = 100 * aux # Convert to integer
+    out_array = aux
+    
     # Save
     saving = True
-    out_array = aux
     out_file = f'{name}_ACF_L{nlags}{ext}'
-    print("Saving in ", out_file)
+    # print("Saving in ", out_file)
     saveBand(out_file, raster, aux)
     rt = raster
     saving = False
