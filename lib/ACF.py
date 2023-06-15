@@ -129,8 +129,6 @@ def ACFtif(path:str, nlags_:int = 364):
         # aux2[i, j, :] = pc.pacf(img[i, j, :], nlags=nlags, method='ywunbiased', alpha=0.05)[0]
         progress = int((i*width+j)/(height*width)*100)
         
-    # Remove the first lag (0), because it is always 1
-    aux = aux[:, :, 1:]
     aux = 100 * aux # Convert to integer
     progress = 100
                         
@@ -175,8 +173,6 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
             progress = int((i*width+j)/(height*width)*100)
     progress = 100
     
-    # Remove the first lag (0), because it is always 1
-    aux = aux[:, :, 1:]
     aux = 100 * aux # Convert to integer
     out_array = aux
     
