@@ -1060,11 +1060,11 @@ class AcWindow(ctk.CTkFrame):
                 self.update()
                 self.master.update()
                 
-            showinfo("Satchange", f"File saved in {ACF.dir_out}")
             self.startBtn.configure(state="normal")
             self.backBtn.configure(state="normal")
             self.pb.stop()
             self.percentajeLabel.destroy()
+            showinfo("Satchange", f"File saved in {ACF.out_file}")
                         
 
     def error(self):
