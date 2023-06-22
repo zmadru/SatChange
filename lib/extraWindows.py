@@ -313,6 +313,7 @@ class DownLoadImages(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         ctk.CTkFrame.__init__(self, master, **kwargs)
         self.master = master
+        self.poligons = []
         self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
         self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
         self.createWidgets()
@@ -376,12 +377,20 @@ class DownLoadImages(ctk.CTkFrame):
             geom = feature.GetGeometryRef()
             for i in range(geom.GetGeometryCount()):
                 aux = geom.GetGeometryRef(i)
-                for point in aux.GetPoints():
-                    point = (point[1], point[0])
-                    shpcoords.append(point)
-                self.map.set_polygon(shpcoords, fill_color="grey", outline_color="black", border_width=2)
+                if aux.GetPoints() is not None:
+                    for point in aux.GetPoints():
+                        point = (point[1], point[0])
+                        shpcoords.append(point)
+                else:
+                    if aux.GetGeometryCount() > 0:
+                        for aux2 in aux:
+                            for point in aux2.GetPoints():
+                                point = (point[1], point[0])
+                                shpcoords.append(point)
+            poligon = self.map.set_polygon(shpcoords, fill_color="grey", outline_color="black", border_width=2)
             self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
-            self.map.set_zoom(15)
+            self.map.set_zoom(12)
+            self.poligons.append(poligon)
         
        
         
