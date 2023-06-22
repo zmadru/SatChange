@@ -302,6 +302,9 @@ class CutRaster(ctk.CTkFrame):
     def back(self):
         self.master.index()
         
+class ZerosViability(ctk.CTkFrame):
+    pass
+        
         
 class DownLoadImages(ctk.CTkFrame):
     """Window to download images from the internet,
@@ -349,8 +352,11 @@ class DownLoadImages(ctk.CTkFrame):
         
         
         self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=10)
-        self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=12)  # google satellite
+        self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=20)  # google satellite
         self.map.grid(row=0, column=0, padx=5, pady=5, columnspan=5, rowspan=5, sticky="nswe")
+        # default coordinates of the map Spain
+        self.map.set_position(40.463667, -3.74922)
+        self.map.set_zoom(6)
         self.mapframe.mainloop()
         
     def setcoordinates(self):
@@ -363,14 +369,19 @@ class DownLoadImages(ctk.CTkFrame):
     def selectshpfile(self):
         self.pathshp = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input shapefile", filetypes=(("Shapefile files", "*.shp"), ("All files", "*.*")))
         # load the shapefile in the map, getting the list of coordinates of the polygons
-        shp = gdal.Open(self.pathshp)
-        
+        shp = ogr.Open(self.pathshp)
+        layer = shp.GetLayer()
         shpcoords = []
-        
-        for i in range(shp.GetLayer().GetFeatureCount()):
-            shpcoords.append(shp.GetLayer().GetFeature(i).GetGeometryRef().GetPoints())
-            
-        self.map.add_polygon(shpcoords, fill_color="#ff0000", fill_opacity=0.5, stroke_color="#ff0000", stroke_opacity=0.5)
+        for feature in layer:
+            geom = feature.GetGeometryRef()
+            for i in range(geom.GetGeometryCount()):
+                aux = geom.GetGeometryRef(i)
+                for point in aux.GetPoints():
+                    point = (point[1], point[0])
+                    shpcoords.append(point)
+                self.map.set_polygon(shpcoords, fill_color="grey", outline_color="black", border_width=2)
+            self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
+            self.map.set_zoom(15)
         
        
         
