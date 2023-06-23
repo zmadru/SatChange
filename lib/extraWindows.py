@@ -1,3 +1,4 @@
+from typing import Optional, Tuple, Union
 import customtkinter as ctk
 from tkinter import filedialog
 import os, sys
@@ -303,7 +304,19 @@ class CutRaster(ctk.CTkFrame):
         self.master.index()
         
 class ZerosViability(ctk.CTkFrame):
-    pass
+    """Window to calculate the viability of the image, analyzing the zeros
+    """
+    
+    def __init__(self, master, **kwargs):
+        ctk.CTkFrame.__init__(self, master, **kwargs)
+        self.master = master
+        self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
+        self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
+        self.createWidgets()
+        
+    def createWidgets(self):
+        self.label = ctk.CTkLabel(self, text="Zeros viability", font=("Helvetica", 36, "bold"))
+        self.label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
         
         
 class DownLoadImages(ctk.CTkFrame):
