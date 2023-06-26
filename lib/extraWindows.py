@@ -307,7 +307,7 @@ class CutRaster(ctk.CTkFrame):
 class ZerosViability(ctk.CTkFrame):
     """Window to calculate the viability of the image, analyzing the zeros
     """
-    
+    file = ''
     def __init__(self, master, **kwargs):
         ctk.CTkFrame.__init__(self, master, **kwargs)
         self.master = master
@@ -351,7 +351,7 @@ class ZerosViability(ctk.CTkFrame):
         self.rasterentry.configure(state="disabled")
         
     def start(self):
-        if self.file and self.iniband.get() and self.finband.get():
+        if self.file != '' and self.iniband.get() and self.finband.get():
             self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
             self.pb.start()
             self.startbtn.configure(state="disabled")
@@ -392,6 +392,7 @@ class DownLoadImages(ctk.CTkFrame):
         ctk.CTkFrame.__init__(self, master, **kwargs)
         self.master = master
         self.poligons = []
+        self.markers = []
         self.grid_rowconfigure((0,1,2,3,4,5), weight=1)
         self.grid_columnconfigure((0,1,2,3,4,5,6), weight=1)
         self.createWidgets()
@@ -429,6 +430,14 @@ class DownLoadImages(ctk.CTkFrame):
         self.loadtshpbtn = ctk.CTkButton(self.configframe, text="Load shapefile", command=self.selectshpfile)
         self.loadtshpbtn.grid(row=2, column=0, padx=5, pady=5, sticky="we")
         
+        self.drawgeometrybtn = ctk.CTkButton(self.configframe, text="Draw geometry", command=self.drawgeometry)
+        self.drawgeometrybtn.grid(row=3, column=0, padx=5, pady=5, sticky="we")
+        
+        self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
+        self.labelgeometrys.grid(row=4, column=0, padx=5, pady=5, sticky="nswe")
+        self.poligonsframe = ScrollableCheckBoxFrame(self.configframe, [], self.checkboxbehavior)
+        self.poligonsframe.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
+        
         
         self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=10)
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=20)  # google satellite
@@ -436,8 +445,28 @@ class DownLoadImages(ctk.CTkFrame):
         # default coordinates of the map Spain
         self.map.set_position(40.463667, -3.74922)
         self.map.set_zoom(6)
+        self.map.add_right_click_menu_command(label="Add Marker", command=self.add_marker_event, pass_coords=True)
         self.mapframe.mainloop()
         
+    
+    def checkboxbehavior(self):
+        print("Checkbox behavior", self.poligonsframe.get_checked_items())
+        for poligon in self.poligons:
+            # print(poligon)
+            if poligon.name not in self.poligonsframe.get_checked_items():
+                poligon.delete()
+            else:
+                aux = self.map.set_polygon(poligon.getcoords(), fill_color="grey", outline_color="black", border_width=2)
+                poligon.setreference(aux)
+            self.map.update()
+            
+            
+    def add_marker_event(self, coords):
+        print("Add marker:", coords)
+        new_marker = self.map.set_marker(coords[0], coords[1])
+        new_marker.data = coords
+        self.markers.append(new_marker)
+      
     def setcoordinates(self):
         self.coordinates = self.coodinatesEntry.get()
         if self.coordinates:
@@ -468,13 +497,69 @@ class DownLoadImages(ctk.CTkFrame):
             poligon = self.map.set_polygon(shpcoords, fill_color="grey", outline_color="black", border_width=2)
             self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
             self.map.set_zoom(12)
-            self.poligons.append(poligon)
+            aux = Poligon("Poligon " + str(len(self.poligons)+1), shpcoords, poligon)
+            self.poligons.append(aux)
+            self.poligonsframe.add_item("Poligon " + str(len(self.poligons)))
+            
         
-       
+    def drawgeometry(self):
+        if len(self.markers) >= 3:
+            coordlist = []
+            for marker in self.markers:
+                coordlist.append(marker.data)
+                marker.delete()
+                
+            poligon = self.map.set_polygon(coordlist, fill_color="grey", outline_color="black", border_width=2)
+            aux = Poligon("Poligon " + str(len(self.poligons)+1), coordlist, poligon)
+            self.poligons.append(aux)
+            self.markers = []
+            self.poligonsframe.add_item("Poligon " + str(len(self.poligons)))
+        else:
+            messagebox.showerror("Error", "You must add at least 3 markers")
         
+class Poligon:
+    def __init__(self, name, coords, poligon):
+        self.name = name
+        self.coords = coords
+        self.mapreference = poligon
         
+    def delete(self):
+        self.mapreference.delete()
         
+    def getcoords(self):
+        return self.coords  
+    
+    def setreference(self, poligon):
+        self.mapreference = poligon  
+    
+    def __str__(self) -> str:
+        return f'Poligon {self.name} with {self.coords}'
         
-        
+class ScrollableCheckBoxFrame(ctk.CTkScrollableFrame):
+    def __init__(self, master, item_list, command=None, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.command = command
+        self.checkbox_list = []
+        for i, item in enumerate(item_list):
+            self.add_item(item)
+
+    def add_item(self, item):
+        checkbox = ctk.CTkCheckBox(self, text=item)
+        if self.command is not None:
+            checkbox.configure(command=self.command)
+        checkbox.grid(row=len(self.checkbox_list), column=0, pady=(0, 10))
+        checkbox.select(True)
+        self.checkbox_list.append(checkbox)
+
+    def remove_item(self, item):
+        for checkbox in self.checkbox_list:
+            if item == checkbox.cget("text"):
+                checkbox.destroy()
+                self.checkbox_list.remove(checkbox)
+                return
+
+    def get_checked_items(self):
+        return [checkbox.cget("text") for checkbox in self.checkbox_list if checkbox.get() == 1]      
         
     

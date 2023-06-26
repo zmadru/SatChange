@@ -81,7 +81,7 @@ class App(ctk.CTk):
         self.menu.add_command(label="Home", command=self.index)       
 
         # File menu
-        self.menu.add_cascade(label="Options", menu=self.file_menu)
+        self.menu.add_cascade(label="Time series procedures", menu=self.file_menu)
         self.file_menu.add_command(label="Indexes", command=self.indexes)
         self.file_menu.add_command(label="Stack", command=self.viewStack)
         self.file_menu.add_command(label="Interpolation", command=self.interpolation)
@@ -91,7 +91,7 @@ class App(ctk.CTk):
         
         # Adicional manu for new processes 
         self.newoptions = tk.Menu(self.menu)
-        self.menu.add_cascade(label="Extra processes", menu=self.newoptions)
+        self.menu.add_cascade(label="Raster procedures", menu=self.newoptions)
         self.newoptions.add_command(label="Fishnet", command=self.fishnet)
         self.newoptions.add_command(label="Cut time series",command=self.cutTimeSeries)
         self.newoptions.add_command(label="Cut raster", command=self.cutRaster)
