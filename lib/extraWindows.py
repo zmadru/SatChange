@@ -454,7 +454,7 @@ class DownLoadImages(ctk.CTkFrame):
         for poligon in self.poligons:
             # print(poligon)
             if poligon.name not in self.poligonsframe.get_checked_items():
-                print("Delete poligon:", poligon.name)
+                # print("Delete poligon:", poligon.name)
                 poligon.delete()
             else:
                 if not poligon.displayed:
