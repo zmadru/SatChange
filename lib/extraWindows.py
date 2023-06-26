@@ -5,6 +5,7 @@ import os, sys
 import lib.fishnetdirs as fn
 import lib.split as sp
 import lib.cutImage as ci
+import lib.zerosViability as zv
 from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal, ogr, osr
@@ -317,6 +318,70 @@ class ZerosViability(ctk.CTkFrame):
     def createWidgets(self):
         self.label = ctk.CTkLabel(self, text="Zeros viability", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        
+        self.selectBtn = ctk.CTkButton(self, text="Select raster", command=self.selectraster)
+        self.selectBtn.grid(row=1, column=0, padx=5, pady=5)
+        self.rasterentry = ctk.CTkTextbox(self, width=45, height=22)
+        self.rasterentry.insert(0.0, "No raster selected")
+        self.rasterentry.configure(state="disabled")
+        self.rasterentry.grid(row=1, column=1, padx=5, pady=5, columnspan=2, sticky="we")
+        
+        self.iniband = ctk.CTkEntry(self, placeholder_text="Initial Band", justify="center")
+        self.iniband.grid(row=2, column=1, padx=5, pady=5, sticky="we")
+        self.finband = ctk.CTkEntry(self, placeholder_text="End Band", justify="center")
+        self.finband.grid(row=2, column=2, padx=5, pady=5, sticky="we")
+        
+        self.startbtn = ctk.CTkButton(self, text="Start", command=self.start)
+        self.startbtn.grid(row=3, column=1, padx=5, pady=5)
+        self.cancelbtn = ctk.CTkButton(self, text="Back", command=self.back)
+        self.cancelbtn.grid(row=3, column=2, padx=5, pady=5)
+        
+        self.pblabel = ctk.CTkLabel(self, text="Progress", font=("Helvetica", 12, "bold"))
+        self.pblabel.grid(row=4, column=0, padx=5, pady=5)
+        self.pb = ctk.CTkProgressBar(self, mode="determinate")
+        self.pb.set(0)
+        self.pb.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="we")
+        
+    
+    def selectraster(self):
+        self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input raster", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.rasterentry.configure(state="normal")
+        self.rasterentry.delete(0.0, "end")
+        self.rasterentry.insert(0.0, self.file)
+        self.rasterentry.configure(state="disabled")
+        
+    def start(self):
+        if self.file and self.iniband.get() and self.finband.get():
+            self.pb = ctk.CTkProgressBar(self, mode="indeterminate")
+            self.pb.start()
+            self.startbtn.configure(state="disabled")
+            self.cancelbtn.configure(state="disabled")
+            thd = Thread(target=zv.main, args=(self.file,))
+            thd.start()
+            self.pblabel.configure(text="Loading raster")
+            while not zv.start:
+                self.update()
+                self.master.update()
+            
+            while zv.progress < 100:
+                self.pblabel.configure(text=f"Progress: {int(zv.progress)}%")
+                self.update()
+                self.master.update()
+            
+            while zv.saving:
+                self.pblabel.configure(text="Saving raster")
+                self.update()
+                self.master.update()
+            
+            self.pb.stop()
+            messagebox.showinfo("Satchange", f"Zeros viability completed, created: {zv.output}")
+            self.startbtn.configure(state="normal")
+            self.cancelbtn.configure(state="normal")
+        else:
+            messagebox.showerror("Error", "Please fill all the fields")
+    
+    def back(self):
+        self.master.index()
         
         
 class DownLoadImages(ctk.CTkFrame):

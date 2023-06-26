@@ -23,6 +23,10 @@ pesos = {
     15:10,
     16:20,
 }
+start = False
+progress:int = 0
+saving = False
+output:str = ''
 
 def zeros(array, ini, fin):
     """Calculate the number of zeros in an array
@@ -83,19 +87,8 @@ def zeros(array, ini, fin):
     res = np.append(res, count)
     return res
 
-if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print("Usage: python3 zerosViability.py <file> <initial value> <final value>")
-        sys.exit(1)
-        
-    path = sys.argv[1]
-    ini = int(sys.argv[2])
-    fin = int(sys.argv[3])
-    
-    if ini > fin:
-        print("Initial value must be less than final value")
-        sys.exit(1)
-        
+def main(path , ini, fin):
+    global start, progress, saving, output
     raster = gdal.Open(path)
     if raster is None:
         print("Error opening raster")
@@ -105,12 +98,13 @@ if __name__ == '__main__':
     img = np.stack([raster.GetRasterBand(i).ReadAsArray() for i in tqdm.tqdm(range(1, raster.RasterCount + 1), desc='Loading Image')], axis=2)
     print(img.shape)
     mask = np.zeros((img.shape[0], img.shape[1], 18))
-    
+    start = True
     for i, j in itertools.product(range(img.shape[0]), range(img.shape[1]), desc='Calculating zeros'):
         mask[i,j,:] = zeros(img[i,j,:], ini, fin)
-        
-        
+        progress = (i*img.shape[1] + j) / (img.shape[0]*img.shape[1]) * 100   
+    progress = 100
     # Save raster
+    saving = True
     driver = raster.GetDriver()
     name, ext = os.path.splitext(path)
     filename = f'{name}_mask{ext}'
@@ -127,3 +121,21 @@ if __name__ == '__main__':
             output.GetRasterBand(i).SetDescription(f'Gap {i-2} zeros')
     
     output.FlushCache()
+    output = filename
+    start = False
+    saving = False
+if __name__ == '__main__':
+    if len(sys.argv) != 4:
+        print("Usage: python3 zerosViability.py <file> <initial value> <final value>")
+        sys.exit(1)
+        
+    path = sys.argv[1]
+    ini = int(sys.argv[2])
+    fin = int(sys.argv[3])
+    
+    if ini > fin:
+        print("Initial value must be less than final value")
+        sys.exit(1)
+    
+    main(path, ini, fin)
+    
