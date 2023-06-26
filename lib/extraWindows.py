@@ -454,10 +454,12 @@ class DownLoadImages(ctk.CTkFrame):
         for poligon in self.poligons:
             # print(poligon)
             if poligon.name not in self.poligonsframe.get_checked_items():
+                print("Delete poligon:", poligon.name)
                 poligon.delete()
             else:
-                aux = self.map.set_polygon(poligon.getcoords(), fill_color="grey", outline_color="black", border_width=2)
-                poligon.setreference(aux)
+                if not poligon.displayed:
+                    aux = self.map.set_polygon(poligon.getcoords(), fill_color="grey", outline_color="black", border_width=2)
+                    poligon.setreference(aux)
             self.map.update()
             
             
@@ -522,15 +524,18 @@ class Poligon:
         self.name = name
         self.coords = coords
         self.mapreference = poligon
+        self.displayed = True
         
     def delete(self):
         self.mapreference.delete()
+        self.displayed = False
         
     def getcoords(self):
         return self.coords  
     
     def setreference(self, poligon):
         self.mapreference = poligon  
+        self.displayed = True
     
     def __str__(self) -> str:
         return f'Poligon {self.name} with {self.coords}'
