@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, Union
 import customtkinter as ctk
-from tkinter import filedialog
+from tkinter import filedialog, simpledialog
 import os, sys
 import lib.fishnetdirs as fn
 import lib.split as sp
@@ -435,7 +435,7 @@ class DownLoadImages(ctk.CTkFrame):
         
         self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
         self.labelgeometrys.grid(row=4, column=0, padx=5, pady=5, sticky="nswe")
-        self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp)
+        self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp, deletecomand=self.deletegeometry)
         self.poligonsframe.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
         
         
@@ -461,7 +461,14 @@ class DownLoadImages(ctk.CTkFrame):
                     aux = self.map.set_polygon(poligon.getcoords(), fill_color="grey", outline_color="black", border_width=2)
                     poligon.setreference(aux)
             self.map.update()
-            
+    
+    def deletegeometry(self, item):
+        print("Delete geometry:", item)
+        self.poligonsframe.remove_item(item)
+        for polygon in self.poligons:
+            if polygon.name == item:
+                polygon.delete()
+                self.poligons.remove(polygon)
             
     def add_marker_event(self, coords):
         print("Add marker:", coords)
@@ -480,6 +487,7 @@ class DownLoadImages(ctk.CTkFrame):
         self.pathshp = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the input shapefile", filetypes=(("Shapefile files", "*.shp"), ("All files", "*.*")))
         # load the shapefile in the map, getting the list of coordinates of the polygons
         shp = ogr.Open(self.pathshp)
+        name, ext = os.path.splitext(os.path.basename(self.pathshp))
         layer = shp.GetLayer()
         shpcoords = []
         for feature in layer:
@@ -499,9 +507,9 @@ class DownLoadImages(ctk.CTkFrame):
             poligon = self.map.set_polygon(shpcoords, fill_color="grey", outline_color="black", border_width=2)
             self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
             self.map.set_zoom(12)
-            aux = Poligon("Poligon " + str(len(self.poligons)+1), shpcoords, poligon)
+            aux = Poligon(name, shpcoords, poligon)
             self.poligons.append(aux)
-            self.poligonsframe.add_item("Poligon " + str(len(self.poligons)))
+            self.poligonsframe.add_item(name)
             
         
     def drawgeometry(self):
@@ -510,12 +518,13 @@ class DownLoadImages(ctk.CTkFrame):
             for marker in self.markers:
                 coordlist.append(marker.data)
                 marker.delete()
-                
+            # ask the user for the name of the poligon
+            name = simpledialog.askstring("Name", "Enter the name of the poligon", parent=self.mapframe)
             poligon = self.map.set_polygon(coordlist, fill_color="grey", outline_color="black", border_width=2)
-            aux = Poligon("Poligon " + str(len(self.poligons)+1), coordlist, poligon)
+            aux = Poligon(name, coordlist, poligon)
             self.poligons.append(aux)
             self.markers = []
-            self.poligonsframe.add_item("Poligon " + str(len(self.poligons)))
+            self.poligonsframe.add_item(name)
         else:
             messagebox.showerror("Error", "You must add at least 3 markers")
             
@@ -545,42 +554,45 @@ class Poligon:
            
         
 class ScrollableLabelButtonFrame(ctk.CTkScrollableFrame):
-    def __init__(self, master, command1=None, command2=None, **kwargs):
+    def __init__(self, master, command1=None, command2=None, deletecomand=None, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_columnconfigure(0, weight=1)
 
         self.command1 = command1
         self.command2 = command2
+        self.commandremove = deletecomand
         self.radiobutton_variable = ctk.StringVar()
-        self.label_list = []
         self.button_list = []
         self.check_list = []
+        self.deletebtn_list = []
 
     def add_item(self, item, image=None):
-        # label = ctk.CTkLabel(self, text=item, image=image, compound="left", padx=5, anchor="w")
         button = ctk.CTkButton(self, text="Download", width=100, height=24)
+        deletebtn = ctk.CTkButton(self, text="X", fg_color="red", hover_color='dark red', width=10, height=24)
         check = ctk.CTkCheckBox(self, text=item, width=100, height=24)
         if self.command1 is not None:
             button.configure(command=lambda: self.command1(item))
         if self.command2 is not None:
             check.configure(command=lambda: self.command2())
-        # label.grid(row=len(self.label_list), column=0, pady=(0, 10), sticky="we")
-        button.grid(row=len(self.button_list), column=1, pady=(0, 10), padx=5)
+        if self.commandremove is not None:
+            deletebtn.configure(command=lambda: self.commandremove(item))
         check.grid(row=len(self.check_list), column=0, pady=(0, 10), sticky="w")
+        button.grid(row=len(self.button_list), column=1, pady=(0, 10), padx=5)
+        deletebtn.grid(row=len(self.button_list), column=2, pady=(0, 10), padx=5)
         check.select(True)
-        # self.label_list.append(label)
+        self.deletebtn_list.append(deletebtn)
         self.button_list.append(button)
         self.check_list.append(check)
 
     def remove_item(self, item):
-        for label, button, check in zip(self.label_list, self.button_list, self.check_list):
-            if item == label.cget("text"):
-                label.destroy()
+        for button, check, delete in zip(self.button_list, self.check_list, self.deletebtn_list):
+            if item == check.cget("text"):
                 button.destroy()
                 check.destroy()
-                self.label_list.remove(label)
+                delete.destroy()
                 self.button_list.remove(button)
                 self.check_list.remove(check)
+                self.deletebtn_list.remove(delete)
                 return
             
     def get_checked_items(self):
