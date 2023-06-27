@@ -435,7 +435,7 @@ class DownLoadImages(ctk.CTkFrame):
         
         self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
         self.labelgeometrys.grid(row=4, column=0, padx=5, pady=5, sticky="nswe")
-        self.poligonsframe = ScrollableCheckBoxFrame(self.configframe, [], self.checkboxbehavior)
+        self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp)
         self.poligonsframe.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
         
         
@@ -518,6 +518,9 @@ class DownLoadImages(ctk.CTkFrame):
             self.poligonsframe.add_item("Poligon " + str(len(self.poligons)))
         else:
             messagebox.showerror("Error", "You must add at least 3 markers")
+            
+    def downloadshp(self, item):
+        print("Download shapefile:", item)
         
 class Poligon:
     def __init__(self, name, coords, poligon):
@@ -539,32 +542,46 @@ class Poligon:
     
     def __str__(self) -> str:
         return f'Poligon {self.name} with {self.coords}'
+           
         
-class ScrollableCheckBoxFrame(ctk.CTkScrollableFrame):
-    def __init__(self, master, item_list, command=None, **kwargs):
+class ScrollableLabelButtonFrame(ctk.CTkScrollableFrame):
+    def __init__(self, master, command1=None, command2=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.grid_columnconfigure(0, weight=1)
 
-        self.command = command
-        self.checkbox_list = []
-        for i, item in enumerate(item_list):
-            self.add_item(item)
+        self.command1 = command1
+        self.command2 = command2
+        self.radiobutton_variable = ctk.StringVar()
+        self.label_list = []
+        self.button_list = []
+        self.check_list = []
 
-    def add_item(self, item):
-        checkbox = ctk.CTkCheckBox(self, text=item)
-        if self.command is not None:
-            checkbox.configure(command=self.command)
-        checkbox.grid(row=len(self.checkbox_list), column=0, pady=(0, 10))
-        checkbox.select(True)
-        self.checkbox_list.append(checkbox)
+    def add_item(self, item, image=None):
+        # label = ctk.CTkLabel(self, text=item, image=image, compound="left", padx=5, anchor="w")
+        button = ctk.CTkButton(self, text="Download", width=100, height=24)
+        check = ctk.CTkCheckBox(self, text=item, width=100, height=24)
+        if self.command1 is not None:
+            button.configure(command=lambda: self.command1(item))
+        if self.command2 is not None:
+            check.configure(command=lambda: self.command2())
+        # label.grid(row=len(self.label_list), column=0, pady=(0, 10), sticky="we")
+        button.grid(row=len(self.button_list), column=1, pady=(0, 10), padx=5)
+        check.grid(row=len(self.check_list), column=0, pady=(0, 10), sticky="w")
+        check.select(True)
+        # self.label_list.append(label)
+        self.button_list.append(button)
+        self.check_list.append(check)
 
     def remove_item(self, item):
-        for checkbox in self.checkbox_list:
-            if item == checkbox.cget("text"):
-                checkbox.destroy()
-                self.checkbox_list.remove(checkbox)
+        for label, button, check in zip(self.label_list, self.button_list, self.check_list):
+            if item == label.cget("text"):
+                label.destroy()
+                button.destroy()
+                check.destroy()
+                self.label_list.remove(label)
+                self.button_list.remove(button)
+                self.check_list.remove(check)
                 return
-
+            
     def get_checked_items(self):
-        return [checkbox.cget("text") for checkbox in self.checkbox_list if checkbox.get() == 1]      
-        
-    
+        return [checkbox.cget("text") for checkbox in self.check_list if checkbox.get() == 1]
