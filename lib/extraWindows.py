@@ -433,11 +433,17 @@ class DownLoadImages(ctk.CTkFrame):
         self.drawgeometrybtn = ctk.CTkButton(self.configframe, text="Draw geometry", command=self.drawgeometry)
         self.drawgeometrybtn.grid(row=3, column=0, padx=5, pady=5, sticky="we")
         
-        self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
-        self.labelgeometrys.grid(row=4, column=0, padx=5, pady=5, sticky="nswe")
-        self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp, deletecomand=self.deletegeometry)
-        self.poligonsframe.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
+        self.sensorselect = ctk.CTkOptionMenu(self.configframe, values=["Modis", "Sentinel 2", "Landsat 8"], state="readonly")
+        self.sensorselect.grid(row=4, column=0, padx=5, pady=5, sticky="we")
+        self.sensorselect.set("Modis")
         
+        self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
+        self.labelgeometrys.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
+        self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp, deletecomand=self.deletegeometry)
+        self.poligonsframe.grid(row=6, column=0, padx=5, pady=5, sticky="nswe")
+        
+        self.dowloadbtn = ctk.CTkButton(self.configframe, text="Download", command=self.download)
+        self.dowloadbtn.grid(row=7, column=0, padx=5, pady=5, sticky="we")
         
         self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=10)
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=20)  # google satellite
@@ -461,6 +467,9 @@ class DownLoadImages(ctk.CTkFrame):
                     aux = self.map.set_polygon(poligon.getcoords(), fill_color="grey", outline_color="black", border_width=2)
                     poligon.setreference(aux)
             self.map.update()
+            
+    def download(self):
+        pass
     
     def deletegeometry(self, item):
         print("Delete geometry:", item)
