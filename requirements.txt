@@ -6,3 +6,5 @@ matplotlib
 statsmodels
 tqdm
 tkintermapview
+ee
+geemap

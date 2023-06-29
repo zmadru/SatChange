@@ -10,7 +10,7 @@ from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal, ogr, osr
 import numpy as np
-import geemap, ee
+import geemap, ee, gcloud.credentials
 import tkintermapview as tkmap
 
 class Fishnet(ctk.CTkFrame):
@@ -406,6 +406,7 @@ class DownLoadImages(ctk.CTkFrame):
         
         
     def openmap(self):
+        messagebox.showinfo("Info", "You must login with your google account with the Authenticate.ipynb notebook")
         self.toplevel = ctk.CTkToplevel(self.master)
         self.toplevel.title("Map")
         self.toplevel.geometry("800x600")
@@ -469,7 +470,18 @@ class DownLoadImages(ctk.CTkFrame):
             self.map.update()
             
     def download(self):
-        pass
+        if len(self.poligons) == 0:
+            messagebox.showerror("Error", "You must draw a geometry")
+        elif len(self.poligonsframe.get_checked_items()) != 1:
+            messagebox.showerror("Error", "You must select one geometry, just mark one checkbox and unmark the others")
+        else:
+            outdir = filedialog.askdirectory(title='Select a directory to save the images')
+            print("Download", outdir, self.sensorselect.get())
+            if outdir:
+                # authentification and initialization of the earth engine                
+                ee.Initialize()
+                collection = ee.ImageCollection("MODIS/061/MOD09Q1").filterDate('2018-01-01', '2018-12-31')
+                print(collection)
     
     def deletegeometry(self, item):
         print("Delete geometry:", item)
@@ -481,7 +493,7 @@ class DownLoadImages(ctk.CTkFrame):
             
     def add_marker_event(self, coords):
         print("Add marker:", coords)
-        new_marker = self.map.set_marker(coords[0], coords[1])
+        new_marker = self.map.set_marker(coords[0], coords[1], text=f'{len(self.markers)+1}', text_color="white")
         new_marker.data = coords
         self.markers.append(new_marker)
       
