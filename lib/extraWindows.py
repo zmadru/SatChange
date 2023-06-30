@@ -1,3 +1,4 @@
+import subprocess
 from typing import Optional, Tuple, Union
 import customtkinter as ctk
 from tkinter import filedialog, simpledialog
@@ -10,7 +11,7 @@ from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal, ogr, osr
 import numpy as np
-import geemap, ee, gcloud.credentials
+import geemap, ee
 import tkintermapview as tkmap
 
 class Fishnet(ctk.CTkFrame):
@@ -406,7 +407,10 @@ class DownLoadImages(ctk.CTkFrame):
         
         
     def openmap(self):
-        messagebox.showinfo("Info", "You must login with your google account with the Authenticate.ipynb notebook")
+        res = messagebox.askyesno("Info", "Did you already authenticate? (The token expires after a week)")
+        if not res:
+            res = subprocess.call('start /wait python3 authenticate.py', shell=True)
+            print(res)
         self.toplevel = ctk.CTkToplevel(self.master)
         self.toplevel.title("Map")
         self.toplevel.geometry("800x600")
