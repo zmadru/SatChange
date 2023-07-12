@@ -357,7 +357,7 @@ class ZerosViability(ctk.CTkFrame):
             self.pb.start()
             self.startbtn.configure(state="disabled")
             self.cancelbtn.configure(state="disabled")
-            thd = Thread(target=zv.main, args=(self.file,))
+            thd = Thread(target=zv.main, args=(self.file))
             thd.start()
             self.pblabel.configure(text="Loading raster")
             while not zv.start:
@@ -485,7 +485,11 @@ class DownLoadImages(ctk.CTkFrame):
                 # authentification and initialization of the earth engine                
                 ee.Initialize()
                 collection = ee.ImageCollection("MODIS/061/MOD09Q1").filterDate('2018-01-01', '2018-12-31')
-                print(collection)
+                print(len(collection.getInfo()["features"]))
+                res = messagebox.askokcancel("Info", f"You are going to download {len(collection.getInfo()['features'])} images")
+                if not res:
+                    return
+                
     
     def deletegeometry(self, item):
         print("Delete geometry:", item)

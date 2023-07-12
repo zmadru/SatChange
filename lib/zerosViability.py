@@ -87,7 +87,7 @@ def zeros(array, ini, fin):
     res = np.append(res, count)
     return res
 
-def main(path , ini, fin):
+def main(path , ini=1, fin=1000000):
     global start, progress, saving, output
     raster = gdal.Open(path)
     if raster is None:
@@ -125,17 +125,20 @@ def main(path , ini, fin):
     start = False
     saving = False
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print("Usage: python3 zerosViability.py <file> <initial value> <final value>")
+    if len(sys.argv) != 2 and len(sys.argv) != 4:
+        print("Usage: python3 zerosViability.py <file> <initial value(optional)> <final value(optional)>")
         sys.exit(1)
         
     path = sys.argv[1]
-    ini = int(sys.argv[2])
-    fin = int(sys.argv[3])
+    if len(sys.argv) == 2:
+        main(path)
+    elif len(sys.argv) == 4:
+        ini = int(sys.argv[2])
+        fin = int(sys.argv[3])
+        if ini > fin:
+            print("Initial value must be less than final value")
+            sys.exit(1)
+        main(path, ini, fin)
     
-    if ini > fin:
-        print("Initial value must be less than final value")
-        sys.exit(1)
     
-    main(path, ini, fin)
     
