@@ -92,7 +92,7 @@ def fill(A, value, method):
 
 
 # Main
-def getFiltRaster(path:str, modeInterp:str='linear', saveformat:str='int16'):
+def getFiltRaster(path:str, modeInterp:str='linear'):
     """Method to filter a raster image
 
     Args:
@@ -128,13 +128,13 @@ def getFiltRaster(path:str, modeInterp:str='linear', saveformat:str='int16'):
     dst = f'{name}_filt_{modeInterp}_{ext}'
     out_file = dst
     print("Saving in ", dst)
-    if saveformat == 'float32':
-        array = aux.astype(np.float32)
-        saveBand(dst, rt, aux, tt=gdal.GDT_Float32)
-    else:
-        aux = aux * 10000
-        array = aux.astype(np.int16)
-        saveBand(dst, rt, aux, tt=gdal.GDT_Int16)
+    # if saveformat == 'float32':
+    #     array = aux.astype(np.float32)
+    #     saveBand(dst, rt, aux, tt=gdal.GDT_Float32)
+    # else:
+    #     aux = aux * 10000
+    #     array = aux.astype(np.int16)
+    saveBand(dst, rt, aux, tt=gdal.GDT_Int16)
         
     
     
@@ -146,8 +146,8 @@ if __name__ == '__main__':
         sys.exit(1)
         
     path = sys.argv[1]
-    saveformat = sys.argv[2]
+    # saveformat = sys.argv[2]
     print("Path: ", path)
-    getFiltRaster(path, modeInterp='linear',saveformat=saveformat)
+    getFiltRaster(path, modeInterp='linear')
     
 ###en el método de llenado borra todo y deja el que diga 'linear' , es el que mejor se comporta. , 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'
