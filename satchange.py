@@ -1042,7 +1042,7 @@ class AcWindow(ctk.CTkFrame):
             showerror("Error", "The number of lags must be a number")
         else:
             self.thd = Thread(target=ACF.ACFtif, args=(self.file, int(self.entry.get())))
-            self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
+            self.pb = ctk.CTkProgressBar(self, mode='determinate')
             self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
             self.percentajeLabel = ctk.CTkLabel(self, text="Loading...")
             self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
@@ -1057,6 +1057,7 @@ class AcWindow(ctk.CTkFrame):
 
             while ACF.progress < 100:
                 self.percentajeLabel.configure(text=f"{ACF.progress}%")
+                self.pb.set(ACF.progress/100)
                 self.percentajeLabel.update()
                 self.update()
 

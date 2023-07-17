@@ -141,7 +141,8 @@ def stack(in_files: list, dir_out: str, out_name: str, out_format: str):
         temp = os.path.join(dir_out, "temp.tif")
         name = os.path.join(dir_out, out_name+".tif")
     else:
-        temp = os.path.join(dir_out, "temp")
+        # temp = os.path.join(dir_out, "temp")
+        temp = os.path.join(dir_out, out_name)
         name = os.path.join(dir_out, out_name)
     outdata = driver.Create(temp, cols, rows, bands, gdal.GDT_Int16)  # Create the stack file
     del band        # Free the variables
@@ -152,12 +153,14 @@ def stack(in_files: list, dir_out: str, out_name: str, out_format: str):
     # Save the stack
     saving = True
     outdata.SetGeoTransform(src_file.GetGeoTransform())  # Set the geotransform
+    print("Projection: ", src_file.GetProjection())
     outdata.SetProjection(src_file.GetProjection())  # Set the projection
     outdata.FlushCache()  # Flush the cache
     del outdata, src_file# Free the variables
     gc.collect()    # Clean the memory
-    gdal.Translate(name, temp, format=out_format, creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
-    os.remove(temp) # Remove the stack in BIL format
+    if out_format == "GTiff":
+        gdal.Translate(name, temp, format=out_format, creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
+        os.remove(temp) # Remove the stack in BIL format
     out_file = name # Return the stack path
     saving = False
 
@@ -165,7 +168,7 @@ def stack(in_files: list, dir_out: str, out_name: str, out_format: str):
 
 ## Main--------------------------------------------------------------
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print("\nUsage: ",sys.argv[0],"<stack name> <files directory> <output directory> <out format>")
         print("Output format: GTiff or ENVI")
         sys.exit(1)
