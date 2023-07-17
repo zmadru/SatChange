@@ -106,7 +106,7 @@ def __readDir(in_files: list) -> None:
 
 
         
-def stack(in_files: list, dir_out: str, out_name: str):
+def stack(in_files: list, dir_out: str, out_name: str, out_format: str):
     """
     # Stack
     Creates a stack with the input files, and saves the stack with the [out_name] on the [dir_out]
@@ -115,6 +115,7 @@ def stack(in_files: list, dir_out: str, out_name: str):
         in_files (list): Input files
         dir_out (str): Output directory
         out_name (str): Output filename
+        out_format (str): Output format (GTiff or ENVI)
 
     ## Returns:
         str: The output file path
@@ -135,8 +136,14 @@ def stack(in_files: list, dir_out: str, out_name: str):
 
     total = bands
 
-    driver = gdal.GetDriverByName("GTiff")
-    outdata = driver.Create(dir_out+"/temp.tif", cols, rows, bands, gdal.GDT_Int16)  # Create the stack file
+    driver = gdal.GetDriverByName(out_format)
+    if out_format == "GTiff":
+        temp = os.path.join(dir_out, "temp.tif")
+        name = os.path.join(dir_out, out_name+".tif")
+    else:
+        temp = os.path.join(dir_out, "temp")
+        name = os.path.join(dir_out, out_name)
+    outdata = driver.Create(temp, cols, rows, bands, gdal.GDT_Int16)  # Create the stack file
     del band        # Free the variables
     gc.collect()    # Clean the memory
     
@@ -149,9 +156,9 @@ def stack(in_files: list, dir_out: str, out_name: str):
     outdata.FlushCache()  # Flush the cache
     del outdata, src_file# Free the variables
     gc.collect()    # Clean the memory
-    gdal.Translate(dir_out+"/"+out_name+".tif", dir_out+"/temp.tif", format="GTiff", creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
-    os.remove(dir_out+"/temp.tif") # Remove the stack in BIL format
-    out_file = dir_out+"/"+out_name+".tif" # Return the stack path
+    gdal.Translate(name, temp, format=out_format, creationOptions=["INTERLEAVE=BAND"]) # Convert the stack to BSQ format
+    os.remove(temp) # Remove the stack in BIL format
+    out_file = name # Return the stack path
     saving = False
 
 
@@ -159,19 +166,23 @@ def stack(in_files: list, dir_out: str, out_name: str):
 ## Main--------------------------------------------------------------
 def main():
     if len(sys.argv) != 4:
-        print("\nUsage: ",sys.argv[0],"<stack name> <files directory> <output directory>")
+        print("\nUsage: ",sys.argv[0],"<stack name> <files directory> <output directory> <out format>")
+        print("Output format: GTiff or ENVI")
         sys.exit(1)
 
     stack_name = sys.argv[1]
     indir = sys.argv[2]
     outdir = sys.argv[3]    
-    
+    outformat = sys.argv[4]
+    if outformat not in ["GTiff", "ENVI"]:
+        print("Output format: GTiff or ENVI")
+        sys.exit(1)
     # get the files from the directory
     files = pathlib.Path(indir).glob("*.tif")
     files2 = []
     for file in files:
         files2.append(str(file))
-    stack(files2, outdir, stack_name)
+    stack(files2, outdir, stack_name, outformat)
 
 
 
