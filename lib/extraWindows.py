@@ -357,7 +357,7 @@ class ZerosViability(ctk.CTkFrame):
             self.pb.start()
             self.startbtn.configure(state="disabled")
             self.cancelbtn.configure(state="disabled")
-            thd = Thread(target=zv.main, args=(self.file))
+            thd = Thread(target=zv.main, args=(self.file, 1, 100000))
             thd.start()
             self.pblabel.configure(text="Loading raster")
             while not zv.start:

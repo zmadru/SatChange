@@ -16,6 +16,8 @@ def cut(raster, shapefile, output):
     global running
     running = True
     gdal.Warp(output, raster, cutlineDSName=shapefile, cropToCutline=True)
+    data = gdal.Open(output)
+    data.setProjection(raster.GetProjection())
     running = False
 
 def cutfiles(raster, shapefilesdir, output):
@@ -41,6 +43,8 @@ def cutfiles(raster, shapefilesdir, output):
             
         name = os.path.join(outputdirCCAA, name+'.tif')
         gdal.Warp(name, raster, cutlineDSName=shapefile, cropToCutline=True)
+        data = gdal.Open(name)
+        data.setProjection(raster.GetProjection())
 
 def main():
     if len(sys.argv) < 4:
