@@ -51,7 +51,7 @@ def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
         typ (str, optional): Defaults to 'GTiff'. Driver used to save.
     """
     transform = rt.GetGeoTransform()
-    geotiff = gdal.GetDriverByName(typ)
+    geotiff = rt.GetDriver()
     output = geotiff.Create(dst, rt.RasterXSize, rt.RasterYSize, 1,tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
@@ -76,7 +76,7 @@ def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):##
     """
     xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
     transform = rt.GetGeoTransform()
-    geotiff = gdal.GetDriverByName(typ)
+    geotiff = rt.GetDriver()
     output = geotiff.Create(dst, xsize, ysize, zsize, tt)
     wkt = rt.GetProjection()
     srs = osr.SpatialReference()
