@@ -168,16 +168,15 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
 
     # Process
     height, width, depth = array.shape
-    aux = np.zeros((height, width, nlags+1))
+    aux = np.zeros((height, width, nlags+1)).astype(np.float32)
     for i in range(height):
         for j in range(width):
-            aux[i, j, :] = pc.acf(array[i, j, :], nlags=nlags, alpha=0.05)[0]
+            aux[i, j, :] = np.array(pc.acf(array[i, j, :], nlags=nlags, alpha=0.05)[0] * 10000).astype(np.int16)
             progress = int((i*width+j)/(height*width)*100)
     progress = 100
     
     # Remove the first lag (0), because it is always 1
     aux = aux[:, :, 1:]
-    aux = 100 * aux # Convert to integer
     out_array = aux
     
     # Save

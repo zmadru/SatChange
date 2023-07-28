@@ -106,7 +106,7 @@ def loadRasterImage(path):
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
         rt = raster_ds
-        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
+        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2).astype(np.int16), False, ""
 
 
 def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
@@ -181,7 +181,7 @@ def getFiltRaster(path):
         sys.exit(1)
 
     # Auxiliar
-    aux = np.zeros(img.shape)
+    aux = np.zeros(img.shape).astype(np.int16)
 
     # Dims
     height, width, depth = img.shape
@@ -193,7 +193,7 @@ def getFiltRaster(path):
     print("Lambda: ", lmbd)
     start = True
     for i, j in itertools.product(range(height), range(width)):
-        aux[i, j, :] = whittaker_smooth(img[i, j, :], lmbd, d=2)
+        aux[i, j, :] = np.array(whittaker_smooth(img[i, j, :], lmbd, d=2)).astype(np.int16)
         rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
         pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0] 
         progress = int((i*width + j) * 100 / (height*width))

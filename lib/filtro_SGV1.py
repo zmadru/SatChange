@@ -48,7 +48,7 @@ def loadRasterImage(path):
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
         rt = raster_ds
-        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
+        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2).astype(np.int16), False, ""
     
 def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
     """
@@ -135,7 +135,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
         sys.exit(1)
 
     # Auxiliar
-    aux = np.zeros(img.shape)
+    aux = np.zeros(img.shape).astype(np.int16)
     
     # Dims
     height, width, depth = img.shape
@@ -145,7 +145,7 @@ def getFiltRaster(path:str, window_size:int, polyorder:int):
     
     start = True
     for i, j in itertools.product(range(height), range(width)):
-        aux[i, j, :] = scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0) #cambiar el tamaño de ventana y polinomio
+        aux[i, j, :] = np.array(scipy.signal.savgol_filter(img[i, j, :], window_size, polyorder, deriv=0)).astype(np.int16) #cambiar el tamaño de ventana y polinomio
         rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
         # pearson[i, j] = r(img[i, j, :], aux[i, j, :])     ##   
         pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##
@@ -183,7 +183,7 @@ def getFilter(array:np.ndarray, window_size:int, polyorder:int, path:str, raster
 
     # Process
     start = True
-    aux = np.zeros(array.shape)
+    aux = np.zeros(array.shape).astype(np.int16)
     rmse = np.zeros((array.shape[0], array.shape[1]))##
     for i, j in itertools.product(range(array.shape[0]), range(array.shape[1])):
         aux[i, j, :] = scipy.signal.savgol_filter(array[i, j, :], window_size, polyorder, deriv=0)

@@ -40,7 +40,7 @@ def loadRasterImage(path):
     if raster_ds.RasterCount == 1:
         return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
     else:
-        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2), False, ""
+        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2).astype(np.int16), False, ""
     
     
 def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):
@@ -86,8 +86,8 @@ def fill(A, value, method):
     inds = np.arange(A.shape[0])
     good = np.where(A != value)
     if len(good[0]) >=2 and len(inds) >= 2:
-        f = interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")
-        A = np.where(A != value, A, f(inds))           
+        f = np.array(interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")).astype(np.int16)
+        A = np.where(A != value, A, f(inds)).astype(np.int16)           
     return A
 
 
@@ -109,7 +109,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
         sys.exit(1)
 
     # Auxiliar
-    aux = np.zeros(img.shape)
+    aux = np.zeros(img.shape).astype(np.int16)
 
     # Dims
     height, width, depth = img.shape
@@ -120,7 +120,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # Run by depth
     
     for i,  j in itertools.product(range(height), range(width)):
-        aux[i, j, :] = fill(img[i, j, :], 0, modeInterp)
+        aux[i, j, :] = fill(img[i, j, :], 0, modeInterp).astype(np.int16)
         progress = (i * width + j) / (height * width) * 100
     
     progress = 100
