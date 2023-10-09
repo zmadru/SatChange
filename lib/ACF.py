@@ -131,7 +131,7 @@ def ACFtif(path:str, nlags_:int = 364):
         
     # Remove the first lag (0), because it is always 1
     aux = aux[:, :, 1:]
-    aux = 100 * aux # Convert to integer
+    aux = 1000 * aux # Convert to integer
     progress = 100
                         
     # Save

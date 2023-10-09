@@ -437,7 +437,7 @@ class StackWindow(ctk.CTkFrame):
             self.buttonClose.configure(state="disabled")
             self.pbLabel = ctk.CTkLabel(self, text="0/0")
             self.pbLabel.grid(row=6, column=0, padx=15, pady=5)
-            thd = Thread(target=stackInt.stack, args=(self.in_files, self.out_dir, name))
+            thd = Thread(target=stackInt.stack, args=(self.in_files, self.out_dir, name, 'ENVI'))
             thd.start()
             self.pb.start()
 
@@ -448,7 +448,7 @@ class StackWindow(ctk.CTkFrame):
             while stackInt.progress/stackInt.total*100 < 100:
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.update()
-                if not thd.is_alive() and filtro.progress < 100:
+                if not thd.is_alive() and stackInt.progress < 100:
                     self.error()
                     self.cancel()
                     break
