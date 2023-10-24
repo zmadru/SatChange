@@ -1,3 +1,4 @@
+import datetime
 import subprocess
 from typing import Optional, Tuple, Union
 import customtkinter as ctk
@@ -442,7 +443,7 @@ class DownLoadImages(ctk.CTkFrame):
         self.sensorselect.grid(row=4, column=0, padx=5, pady=5, sticky="we")
         self.sensorselect.set("Modis")
         
-        self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometrys")
+        self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometries")
         self.labelgeometrys.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
         self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp, deletecomand=self.deletegeometry)
         self.poligonsframe.grid(row=6, column=0, padx=5, pady=5, sticky="nswe")
@@ -479,16 +480,39 @@ class DownLoadImages(ctk.CTkFrame):
         elif len(self.poligonsframe.get_checked_items()) != 1:
             messagebox.showerror("Error", "You must select one geometry, just mark one checkbox and unmark the others")
         else:
+            # ask the user for the filter dates of the images with a emergent window
+            self.initialdate = simpledialog.askstring("Initial date", "Enter the initial date (yyyy-mm-dd)")
+            self.finaldate = simpledialog.askstring("Final date", "Enter the final date (yyyy-mm-dd)")     
+            # check if the dates are correct
+            try:
+                datetime.datetime.strptime(self.initialdate, '%Y-%m-%d')
+                datetime.datetime.strptime(self.finaldate, '%Y-%m-%d')
+            except ValueError:
+                messagebox.showerror("Error", "The dates are not correct, please enter the dates in the format yyyy-mm-dd")
+                return   
+
+            if self.initialdate > self.finaldate:
+                messagebox.showerror("Error", "The initial date must be before the final date")
+                return
+            
+            # ask the user for the output directory
             outdir = filedialog.askdirectory(title='Select a directory to save the images')
-            print("Download", outdir, self.sensorselect.get())
+            print("Download", outdir, self.sensorselect.get(), self.initialdate, self.finaldate)
+            if self.sensorselect.get() == "Modis":
+                product = "MODIS/061/MOD09Q1"
+            elif self.sensorselect.get() == "Sentinel 2":
+                product = "COPERNICUS/S2_SR_HARMONIZED"
+            elif self.sensorselect.get() == "Landsat 8":
+                product = "LANDSAT/LC08/C01/T1_SR"
             if outdir:
                 # authentification and initialization of the earth engine                
                 ee.Initialize()
-                collection = ee.ImageCollection("MODIS/061/MOD09Q1").filterDate('2018-01-01', '2018-12-31')
+                collection = ee.ImageCollection(product).filterDate(self.initialdate, self.finaldate)
                 print(len(collection.getInfo()["features"]))
                 res = messagebox.askokcancel("Info", f"You are going to download {len(collection.getInfo()['features'])} images")
                 if not res:
                     return
+                
                 
     
     def deletegeometry(self, item):
@@ -559,6 +583,29 @@ class DownLoadImages(ctk.CTkFrame):
             
     def downloadshp(self, item):
         print("Download shapefile:", item)
+        for poligon in self.poligons:
+            if poligon.name == item:
+                self.map.set_position(poligon.coords[0][0], poligon.coords[0][1])
+                self.map.set_zoom(11)
+                outdir = filedialog.askdirectory(title='Select a directory to save the shapefile')
+                name = os.path.join(outdir, item)
+                driver = gdal.GetDriverByName('ESRI Shapefile')
+                ds = driver.Create(f'{name}.shp', 0, 0, 0, gdal.GDT_Unknown)
+                ds.CreateLayer(f'{item}', geom_type=ogr.wkbPolygon)
+                layer = ds.GetLayer()
+                feature = ogr.Feature(layer.GetLayerDefn())
+                wkt = "POLYGON(("
+                for coord in poligon.coords:
+                    wkt += f'{coord[1]} {coord[0]},'
+                wkt = wkt[:-1]
+                wkt += "))"
+                poly = ogr.CreateGeometryFromWkt(wkt)
+                feature.SetGeometry(poly)
+                layer.CreateFeature(feature)           
+                # tell the user that the shapefile has been created
+                messagebox.showinfo("Satchange", f"Shapefile {name}.shp created")
+                return
+        
         
 class Poligon:
     def __init__(self, name, coords, poligon):
