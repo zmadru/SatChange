@@ -86,7 +86,7 @@ def fill(A, value, method):
     inds = np.arange(A.shape[0])
     good = np.where(A != value)
     if len(good[0]) >=2 and len(inds) >= 2:
-        f = np.array(interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")).astype(np.int16)
+        f = interpolate.interp1d(inds[good], A[good], method, bounds_error =False, fill_value="extrapolate")
         A = np.where(A != value, A, f(inds)).astype(np.int16)           
     return A
 
@@ -109,7 +109,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
         sys.exit(1)
 
     # Auxiliar
-    aux = np.zeros(img.shape).astype(np.int16)
+    # aux = np.zeros(img.shape).astype(np.int16)
 
     # Dims
     height, width, depth = img.shape
@@ -120,7 +120,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # Run by depth
     
     for i,  j in itertools.product(range(height), range(width)):
-        aux[i, j, :] = fill(img[i, j, :], 0, modeInterp).astype(np.int16)
+        img[i, j, :] = np.array(fill(img[i, j, :], 0, modeInterp)).astype(np.int16)
         progress = (i * width + j) / (height * width) * 100
     
     progress = 100
@@ -134,7 +134,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # else:
     #     aux = aux * 10000
     #     array = aux.astype(np.int16)
-    saveBand(dst, rt, aux, tt=gdal.GDT_Int16)
+    saveBand(dst, rt, img, tt=gdal.GDT_Int16)
         
     
     

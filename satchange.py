@@ -584,7 +584,7 @@ class InterpolationWindow(ctk.CTkFrame):
         if self.file == "":
             showerror("Error", "You must select a file")
         else:
-            self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get(), self.formatSelect.get()))
+            self.thd = Thread(target=interpolacion.getFiltRaster, args=(self.file, self.modeSelect.get()))
             self.thd.start()
             self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
             self.percentajeLabel = ctk.CTkLabel(self, justify="right", text="0%")
@@ -597,7 +597,7 @@ class InterpolationWindow(ctk.CTkFrame):
             while interpolacion.progress < 100:
                 self.percentajeLabel.configure(text=(str(interpolacion.progress).split(".")[0]+"%"))
                 self.update()
-                if not self.thd.is_alive() and filtro.progress < 100:
+                if not self.thd.is_alive() and interpolacion.progress < 100:
                     self.error()
                     self.master.log()
                     break
@@ -1568,7 +1568,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.configure(state="disabled")
 
         name = self.stackEntry.get()
-        thread = Thread(target=stackInt.stack, args=(self.infiles, self.outdir, name))
+        thread = Thread(target=stackInt.stack, args=(self.infiles, self.outdir, name, 'ENVI'))
         thread.start()
         while stackInt.start == False:
             self.update()
@@ -1576,7 +1576,7 @@ class NewProcessWin(ctk.CTkFrame):
         while stackInt.progress/len(self.infiles)*100 < 100:
             self.percentagelabel.configure(text=str((stackInt.progress/len(self.infiles))*100).split('.')[0] + "%")
             self.update()
-            if not thread.is_alive():
+            if not thread.is_alive() and stackInt.progress/len(self.infiles)*100 < 100:
                 self.error()
                 self.back()
                 break

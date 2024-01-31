@@ -8,6 +8,7 @@ import lib.fishnetdirs as fn
 import lib.split as sp
 import lib.cutImage as ci
 import lib.zerosViability as zv
+import lib.downloadSentinel as ds
 from tkinter import messagebox
 from threading import Thread
 from osgeo import gdal, ogr, osr
@@ -410,12 +411,12 @@ class DownLoadImages(ctk.CTkFrame):
     def openmap(self):
         res = messagebox.askyesno("Info", "Did you already authenticate? (The token expires after a week)")
         if not res:
-            res = subprocess.call('start /wait python3 authenticate.py', shell=True)
+            res = subprocess.call('start /wait python3.10 authenticate.py', shell=True)
             print(res)
         self.toplevel = ctk.CTkToplevel(self.master)
         self.toplevel.title("Map")
         self.toplevel.geometry("800x600")
-        self.toplevel.resizable(0,0)
+        # self.toplevel.resizable(0,0)
         self.toplevel.focus_set()
         self.toplevel.grid_columnconfigure((0,1,2,3), weight=1)
         self.toplevel.grid_rowconfigure((0,1,2,3,4), weight=1)
@@ -441,7 +442,7 @@ class DownLoadImages(ctk.CTkFrame):
         
         self.sensorselect = ctk.CTkOptionMenu(self.configframe, values=["Modis", "Sentinel 2", "Landsat 8"], state="readonly")
         self.sensorselect.grid(row=4, column=0, padx=5, pady=5, sticky="we")
-        self.sensorselect.set("Modis")
+        self.sensorselect.set("Sentinel 2")
         
         self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometries")
         self.labelgeometrys.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
@@ -474,15 +475,35 @@ class DownLoadImages(ctk.CTkFrame):
                     poligon.setreference(aux)
             self.map.update()
             
+    def tempfile(self, item):       
+        for poligon in self.poligons:
+            if poligon.name == item:
+                tempdir = os.path.join(".", "tmp")
+                os.makedirs(tempdir, exist_ok=True)
+                name = os.path.join(tempdir, 'roi.shp')
+                driver = gdal.GetDriverByName('ESRI Shapefile')
+                ds = driver.Create(f'{name}', 0, 0, 0, gdal.GDT_Unknown)
+                ds.CreateLayer(f'{item}', geom_type=ogr.wkbPolygon)
+                layer = ds.GetLayer()
+                feature = ogr.Feature(layer.GetLayerDefn())
+                wkt = "POLYGON(("
+                for coord in poligon.coords:
+                    wkt += f'{coord[1]} {coord[0]},'
+                wkt = wkt[:-1]
+                wkt += "))"
+                poly = ogr.CreateGeometryFromWkt(wkt)
+                feature.SetGeometry(poly)
+                layer.CreateFeature(feature)
+                return str(name)
+                 
     def download(self):
-        if len(self.poligons) == 0:
-            messagebox.showerror("Error", "You must draw a geometry")
-        elif len(self.poligonsframe.get_checked_items()) != 1:
+        if len(self.poligonsframe.get_checked_items()) > 1:
             messagebox.showerror("Error", "You must select one geometry, just mark one checkbox and unmark the others")
         else:
             # ask the user for the filter dates of the images with a emergent window
             self.initialdate = simpledialog.askstring("Initial date", "Enter the initial date (yyyy-mm-dd)")
-            self.finaldate = simpledialog.askstring("Final date", "Enter the final date (yyyy-mm-dd)")     
+            self.finaldate = simpledialog.askstring("Final date", "Enter the final date (yyyy-mm-dd)")   
+            resolution = simpledialog.askstring("Resolution", "Enter the resolution (meters)")  
             # check if the dates are correct
             try:
                 datetime.datetime.strptime(self.initialdate, '%Y-%m-%d')
@@ -498,23 +519,48 @@ class DownLoadImages(ctk.CTkFrame):
             # ask the user for the output directory
             outdir = filedialog.askdirectory(title='Select a directory to save the images')
             print("Download", outdir, self.sensorselect.get(), self.initialdate, self.finaldate)
-            if self.sensorselect.get() == "Modis":
-                product = "MODIS/061/MOD09Q1"
-            elif self.sensorselect.get() == "Sentinel 2":
-                product = "COPERNICUS/S2_SR_HARMONIZED"
-            elif self.sensorselect.get() == "Landsat 8":
-                product = "LANDSAT/LC08/C01/T1_SR"
+            
             if outdir:
-                # authentification and initialization of the earth engine                
-                ee.Initialize()
-                collection = ee.ImageCollection(product).filterDate(self.initialdate, self.finaldate)
-                print(len(collection.getInfo()["features"]))
-                res = messagebox.askokcancel("Info", f"You are going to download {len(collection.getInfo()['features'])} images")
-                if not res:
-                    return
+                if self.sensorselect.get() == "Modis":
+                    messagebox.showinfo("Satchange", "This module is not implemented yet")
+                elif self.sensorselect.get() == "Sentinel 2":
+                    if len(self.poligons) == 0:
+                        name = simpledialog.askstring("Provincia", "Enter the name of the province")
+                    else:
+                        name = self.tempfile(self.poligonsframe.get_checked_items()[0])
+                    messagebox.showinfo("Satchange", "Wait until the tile is detected")
+                    tile = ds.detect_tile(name)
+                    shp = ogr.Open(tile)
+                    name, ext = os.path.splitext(os.path.basename(tile))
+                    layer = shp.GetLayer()
+                    shpcoords = []
+                    for feature in layer:
+                        geom = feature.GetGeometryRef()
+                        for i in range(geom.GetGeometryCount()):
+                            aux = geom.GetGeometryRef(i)
+                            if aux.GetPoints() is not None:
+                                for point in aux.GetPoints():
+                                    point = (point[1], point[0])
+                                    shpcoords.append(point)
+                            else:
+                                if aux.GetGeometryCount() > 0:
+                                    for aux2 in aux:
+                                        for point in aux2.GetPoints():
+                                            point = (point[1], point[0])
+                                            shpcoords.append(point)
+                        poligon = self.map.set_polygon(shpcoords, fill_color="green", outline_color="black", border_width=2)
+                        self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
+                        self.map.set_zoom(11)
+                        aux = Poligon(name, shpcoords, poligon)
+                        self.poligons.append(aux)
+                        self.poligonsframe.add_item(name)
+                    
+                    # delete the temporary dir
+                    os.removedirs(os.path.join(".", "tmp"))
+                        
+                elif self.sensorselect.get() == "Landsat 8":
+                    messagebox.showinfo("Satchange", "This module is not implemented yet")              
                 
-                
-    
     def deletegeometry(self, item):
         print("Delete geometry:", item)
         self.poligonsframe.remove_item(item)
