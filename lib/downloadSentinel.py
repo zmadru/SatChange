@@ -7,6 +7,15 @@ from osgeo import gdal, ogr, osr
 import glob
 import time
 
+# global variables
+roi: ee.FeatureCollection
+tile: str
+orbit: int
+n_images: int = 0
+get_n_images: bool = False
+progress: int = 0
+
+
 def provincias(provincia_name:str):
     global roi
     provincias = r"\\Tierra\bd_sigpac\Tiles_S2\recintos_provinciales_inspire_peninbal_etrs89\recintos_provinciales_inspire_peninbal_etrs89.shp"
@@ -53,7 +62,7 @@ def provincias(provincia_name:str):
     roi = geemap.shp_to_ee(tmp_file)
     
 def detect_tile(name:str):
-    global roi
+    global roi, tile, orbit
     
     ee.Initialize()
     
@@ -99,10 +108,76 @@ def detect_tile(name:str):
     return tmp_file 
 
 
-def download(oudir:str, initial_date:str, end_date:str, resolution:int):
-    global roi
-    pass
+def download(outdir:str, initial_date:str, end_date:str, resolution:str, index:str='NDVI'):
+    global roi, tile, orbit, n_images, get_n_images, progress
+    print(f"Initial date: {initial_date}, End date: {end_date}, Resolution: {resolution}, Index: {index}")
+    sentinel_collection = ee.ImageCollection("COPERNICUS/S2_HARMONIZED").filterDate(initial_date, end_date).filterMetadata('MGRS_TILE', 'equals', tile).filterMetadata('SENSING_ORBIT_NUMBER', 'equals', orbit)
+    n_images = len(sentinel_collection.getInfo()['features'])
+    get_n_images = True
+    print(f"Number of images: {n_images}")
+    
+    # calculate NDVI for each image in the collection
+    if index == 'NDVI':
+        collection = calculate_ndvi_sentinel(sentinel_collection)
+    else:
+        return None
+    
+    # download the images
+    cuts_dir = r"\\Tierra\bd_sigpac\Tiles_S2\TILES"
+    cuts_dir = os.path.join(cuts_dir, tile)
+    if resolution == '10':
+        cuts_dir = os.path.join(cuts_dir, f'{tile}_16')
+    elif resolution == '20':
+        cuts_dir = os.path.join(cuts_dir, f'{tile}_4')
+    elif resolution == '60':
+        cuts_dir = os.path.join(cuts_dir, '60')
+    print(cuts_dir) 
+    # get the .shp files in the directory
+    shp_files = glob.glob(os.path.join(cuts_dir, "*.shp"))
+    # remove the .shp that ends with _gcs
+    shp_files = [f for f in shp_files if not f.endswith("_gcs.shp")]
+    c_list = []
+    for f in shp_files:
+        c_list.append(geemap.shp_to_ee(f))
+    print(len(c_list))
+    
+    temp_dir = os.path.join(outdir, 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+    images = collection.toList(len(collection.getInfo()["features"]))
+    n = len(images.getInfo())
+    scale = resolution
+    progress = 0
+    for i in range(n):
+        image = ee.Image(images.get(i))
+        name = image.get('system:index').getInfo()
+        for c, j in zip(c_list, range(len(c_list))):
+            filename = os.path.join(temp_dir, f'{name}_{j}.tif')
+            geemap.ee_export_image(image, filename=filename, scale=int(scale), region=c.geometry(), file_per_band=False)
+        # mossaic the n images
+        filename = os.path.join(outdir, f'{name}.tif')
+        # list the temp files
+        temp_files = os.listdir(temp_dir)
+        g = gdal.Warp(filename, [os.path.join(temp_dir, f) for f in temp_files], format='GTiff')
+        g = None
+        # remove the temp files
+        for f in temp_files:
+            os.remove(os.path.join(temp_dir, f))
+        progress += 1
+    
+    get_n_images = False
+       
+        
 
     
     
-    
+def calculate_ndvi_sentinel(collection):
+    def add_ndvi(image):
+        img = image.addBands(image.normalizedDifference(['B8A', 'B4']).rename('NDVI')).select('NDVI')
+        # take the quality band and delete the pixel with clouds, shadows,
+        quality = image.select('QA60')
+        mask = quality.bitwiseAnd(1 << 10).eq(0).And(quality.bitwiseAnd(1 << 11).eq(0))
+        img = img.updateMask(mask)
+        return img
+    return collection.map(add_ndvi)
+
+

@@ -550,10 +550,24 @@ class DownLoadImages(ctk.CTkFrame):
                                             shpcoords.append(point)
                         poligon = self.map.set_polygon(shpcoords, fill_color="green", outline_color="black", border_width=2)
                         self.map.set_position(geom.Centroid().GetPoint_2D()[1], geom.Centroid().GetPoint_2D()[0])
-                        self.map.set_zoom(11)
+                        self.map.set_zoom(8)
                         aux = Poligon(name, shpcoords, poligon)
                         self.poligons.append(aux)
                         self.poligonsframe.add_item(name)
+                    
+                    # download the images
+                    dwnldwin = ProgressWindow(self.toplevel)
+                    dwnldwin.focus_set()
+                    download_thread = Thread(target=ds.download, args=(outdir, self.initialdate, self.finaldate, resolution))
+                    download_thread.start()
+                    while download_thread.is_alive():
+                        dwnldwin.update_progress()
+                        dwnldwin.update()
+                        self.update()
+                        self.master.update()
+                    
+                    dwnldwin.destroy()
+                    messagebox.showinfo("Satchange", "Download completed")
                     
                     # delete the temporary dir
                     os.removedirs(os.path.join(".", "tmp"))
@@ -652,7 +666,36 @@ class DownLoadImages(ctk.CTkFrame):
                 messagebox.showinfo("Satchange", f"Shapefile {name}.shp created")
                 return
         
+
+class ProgressWindow(ctk.CTkToplevel):
+    def __init__(self, master):
+        ctk.CTkToplevel.__init__(self, master)
+        self.master = master
+        self.geometry("400x100")
+        self.resizable(0,0)
+        self.title("Download")
+        self.grid_rowconfigure((0), weight=1)
+        self.grid_columnconfigure((0,1,2,3), weight=1)
+        self.createWidgets()
         
+    def createWidgets(self):
+        self.pb = ctk.CTkProgressBar(self, mode="determinate")
+        self.pb.set(0)
+        self.pb.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="we")
+        
+        self.label = ctk.CTkLabel(self, text="Loading...", font=("Helvetica", 12, "bold"))
+        self.label.grid(row=0, column=3, columnspan=1, padx=5, pady=5, sticky="we")
+        
+    def update_progress(self):
+        if ds.get_n_images:
+            progress = ds.progress / ds.n_images
+            self.pb.set(progress)
+            self.label.configure(text=f"{ds.progress}/{ds.n_images}") 
+            self.pb.update()
+            self.label.update()       
+        
+    
+       
 class Poligon:
     def __init__(self, name, coords, poligon):
         self.name = name
