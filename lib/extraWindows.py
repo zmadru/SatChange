@@ -415,7 +415,7 @@ class DownLoadImages(ctk.CTkFrame):
             print(res)
         self.toplevel = ctk.CTkToplevel(self.master)
         self.toplevel.title("Map")
-        self.toplevel.geometry("800x600")
+        self.toplevel.geometry("900x600")
         # self.toplevel.resizable(0,0)
         self.toplevel.focus_set()
         self.toplevel.grid_columnconfigure((0,1,2,3), weight=1)
@@ -427,30 +427,33 @@ class DownLoadImages(ctk.CTkFrame):
         
         self.configframe = ctk.CTkFrame(self.toplevel)
         self.configframe.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9,10), weight=1)
-        self.configframe.grid_columnconfigure((0), weight=1)
+        self.configframe.grid_columnconfigure((0,1), weight=1)
         self.configframe.grid(row=0, column=0, padx=5, pady=5, sticky="nswe", columnspan=1, rowspan=5)
         self.coodinatesEntry = ctk.CTkEntry(self.configframe, placeholder_text="Coordinates (35.2115, -12.65)", justify="center")
         self.coodinatesEntry.grid(row=0, column=0, padx=5, pady=5, sticky="we")
         self.coordinatesbtn = ctk.CTkButton(self.configframe, text="Set coordinates", command=self.setcoordinates)
-        self.coordinatesbtn.grid(row=1, column=0, padx=5, pady=5, sticky="we")
+        self.coordinatesbtn.grid(row=0, column=1, padx=5, pady=5, sticky="we")
         
         self.loadtshpbtn = ctk.CTkButton(self.configframe, text="Load shapefile", command=self.selectshpfile)
-        self.loadtshpbtn.grid(row=2, column=0, padx=5, pady=5, sticky="we")
+        self.loadtshpbtn.grid(row=2, column=0, padx=5, pady=5, sticky="we", columnspan=2)
         
         self.drawgeometrybtn = ctk.CTkButton(self.configframe, text="Draw geometry", command=self.drawgeometry)
-        self.drawgeometrybtn.grid(row=3, column=0, padx=5, pady=5, sticky="we")
+        self.drawgeometrybtn.grid(row=3, column=0, padx=5, pady=5, sticky="we", columnspan=2)
         
         self.sensorselect = ctk.CTkOptionMenu(self.configframe, values=["Modis", "Sentinel 2", "Landsat 8"], state="readonly")
         self.sensorselect.grid(row=4, column=0, padx=5, pady=5, sticky="we")
         self.sensorselect.set("Sentinel 2")
+        self.indexselect = ctk.CTkOptionMenu(self.configframe, values=["NDVI"], state="readonly")
+        self.indexselect.grid(row=4, column=1, padx=5, pady=5, sticky="we")
+        self.indexselect.set("NDVI")
         
         self.labelgeometrys= ctk.CTkLabel(self.configframe, text="Geometries")
-        self.labelgeometrys.grid(row=5, column=0, padx=5, pady=5, sticky="nswe")
+        self.labelgeometrys.grid(row=5, column=0, padx=5, pady=5, sticky="nswe", columnspan=2)
         self.poligonsframe = ScrollableLabelButtonFrame(self.configframe, command2=self.checkboxbehavior, command1=self.downloadshp, deletecomand=self.deletegeometry)
-        self.poligonsframe.grid(row=6, column=0, padx=5, pady=5, sticky="nswe")
+        self.poligonsframe.grid(row=6, column=0, padx=5, pady=5, sticky="nswe", columnspan=2)
         
         self.dowloadbtn = ctk.CTkButton(self.configframe, text="Download", command=self.download)
-        self.dowloadbtn.grid(row=7, column=0, padx=5, pady=5, sticky="we")
+        self.dowloadbtn.grid(row=7, column=0, padx=5, pady=5, sticky="we", columnspan=2)
         
         self.map =  tkmap.TkinterMapView(self.mapframe, corner_radius=10)
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=20)  # google satellite
@@ -460,6 +463,7 @@ class DownLoadImages(ctk.CTkFrame):
         self.map.set_zoom(6)
         self.map.add_right_click_menu_command(label="Add Marker", command=self.add_marker_event, pass_coords=True)
         self.mapframe.mainloop()
+        self.toplevel.focus_set()
         
     
     def checkboxbehavior(self):
@@ -558,7 +562,7 @@ class DownLoadImages(ctk.CTkFrame):
                     # download the images
                     dwnldwin = ProgressWindow(self.toplevel)
                     dwnldwin.focus_set()
-                    download_thread = Thread(target=ds.download, args=(outdir, self.initialdate, self.finaldate, resolution))
+                    download_thread = Thread(target=ds.download, args=(outdir, self.initialdate, self.finaldate, resolution, self.indexselect.get()))
                     download_thread.start()
                     while download_thread.is_alive():
                         dwnldwin.update_progress()
