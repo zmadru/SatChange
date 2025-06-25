@@ -1600,9 +1600,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.configure(state="disabled")
 
         if self.stackSwitch.get() == True:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get(), self.formatSelect.get()))
+            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get()))
         else:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get(), self.formatSelect.get()))
+            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
         thread.start()
 
         while interpolacion.progress < 100:
@@ -1698,7 +1698,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Calculating change detection")
         self.processlabel.configure(state="disabled")
 
-        thread = Thread(target=changeDetector.changeDetectorFile, args=(str(ACF.out_file),0))
+        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt))
         thread.start()
 
         while not changeDetector.start:
@@ -1756,7 +1756,7 @@ class NewProcessWin(ctk.CTkFrame):
         
 if __name__ == "__main__":
     # redirect stderr to a file
-    sys.stderr = error
+    # sys.stderr = error
     # Initialize the main window
     app = App()
     app.mainloop()

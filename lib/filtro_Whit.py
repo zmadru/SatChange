@@ -136,13 +136,13 @@ def getFilter(array:np.array, path:str, raster):
     out_file = dst
     out_array = array
     print("Saving in ", dst)
-    saveBand(dst, rt, array)
+    saveBand(dst, raster, array)
     dst = f'{name}_whitrmse_{ext}'
     print("Saving in ", dst)
-    saveSingleBand(dst, rt, rmse)##
+    saveSingleBand(dst, raster, rmse)##
     dst = f'{name}_whitpearson_{ext}'
     print("Saving in ", dst)
-    saveSingleBand(dst, rt, pearson)##
+    saveSingleBand(dst, raster, pearson)##
     saving = False
     rt = raster
     

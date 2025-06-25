@@ -68,15 +68,15 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     progress = 100
     
     # Remove the first lag (0), because it is always 1
-    aux = aux[:, :, 1:]
+    # aux = aux[:, :, 1:]
     out_array = aux
     
     # Save
     saving = True
-    out_file = f'{name}_ACF_L{nlags}{ext}'
-    # print("Saving in ", out_file)
-    saveBand(out_file, raster, aux)
     rt = raster
+    out_file = f'{name}_ACF_L{nlags}{ext}'
+    print("Saving in ", out_file)
+    saveBand(out_file, raster, aux)
     saving = False
     start = False
 

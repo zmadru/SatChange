@@ -50,7 +50,7 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
         path (str): Path to raster image
         modeInterp (str, optional): Interpolation mode. Defaults to None.
     """
-    global progress, out_file, array
+    global progress, out_file, array, rt, saving
 
     name, ext = os.path.splitext(path)
     # Read raster
