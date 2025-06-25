@@ -16,8 +16,8 @@ def cut(raster, shapefile, output):
     global running
     running = True
     gdal.Warp(output, raster, cutlineDSName=shapefile, cropToCutline=True)
-    data = gdal.Open(output)
-    data.setProjection(raster.GetProjection())
+    # data = gdal.Open(output)
+    # data.setProjection(raster.GetProjection())
     running = False
 
 def cutfiles(raster, shapefilesdir, output):

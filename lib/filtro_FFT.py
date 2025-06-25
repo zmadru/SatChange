@@ -7,6 +7,9 @@ from scipy.ndimage import maximum_filter1d
 import os, sys
 import scipy.stats as st
 from tqdm.contrib import itertools
+from lib.load_save_raster import loadRasterImage, saveBand, saveSingleBand
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
 # Global variables
 progress:int = 0
@@ -16,91 +19,6 @@ start:bool = False
 out_array:np.ndarray = None
 
 rt = None
-
-# Load and save raster files
-def loadRasterImage(path):
-    """ 
-    Load a raster image from disk to memory
-    Args:
-        path (str): Path to file
-
-    Returns:
-        (Dataset GDAL object): Object that contains the structure of the raster file
-        (array): Image in array format
-        (boolean): Indicates that if there is an error
-        (str): Indicates the associated error message
-    """
-    global rt
-    raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
-    if raster_ds is None:
-        return None, None, True, "The file cannot be opened."
-    print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
-    print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
-    if raster_ds.RasterCount == 1:
-        rt = raster_ds
-        return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
-    else:
-        rt = raster_ds
-        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2).astype(np.int16), False, ""
-     
-def saveSingleBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff'): ##
-    """
-    Save a raster image from memory to disk
-
-    Args:
-        dst (str): Path to output file
-        rt  (Dataset GDAL object): Object that contains the structure of the raster file
-        img (array): Image in array format
-        tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
-        typ (str, optional): Defaults to 'GTiff'. Driver used to save.
-    """
-    transform = rt.GetGeoTransform()
-    geotiff = rt.GetDriver()
-    output = geotiff.Create(dst, rt.RasterXSize, rt.RasterYSize, 1,tt)
-    wkt = rt.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt)
-    output.GetRasterBand(1).WriteArray(img)
-    output.GetRasterBand(1).SetNoDataValue(-999)
-    output.SetGeoTransform(transform)
-    output.SetProjection(srs.ExportToWkt())
-    output = None
- 
-        
-def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):##
-    """
-    Save a raster image from memory to disk
-
-    Args:
-        dst (str): Path to output file
-        rt  (Dataset GDAL object): Object that contains the structure of the raster file
-        img (array): Image in array format
-        tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
-        typ (str, optional): Defaults to 'GTiff'. Driver used to save.
-    """
-    xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
-    transform = rt.GetGeoTransform()
-    geotiff = rt.GetDriver()
-    output = geotiff.Create(dst, xsize, ysize, zsize, tt)
-    wkt = rt.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt)
-    
-    for i in range(1, zsize+1): ##
-        output.GetRasterBand(i).WriteArray(img[:, :, i-1])##
-        output.GetRasterBand(i).SetNoDataValue(nodata)
-    
-    output.SetGeoTransform(transform)
-    output.SetProjection(srs.ExportToWkt())
-    output = None
-
-def s(x, meanx, n):##
-    return np.sqrt(np.sum(np.power(x, 2)) / n - meanx**2)
-
-def r(x, y, n):##
-    meanx, meany = np.mean(x), np.mean(y)
-    return ((np.sum(x * y) / n) - (meanx * meany)) / (s(x, meanx, n) * s(y, meany, n))
-
 
 # FFT filter
 
@@ -119,6 +37,68 @@ def filterFFt1d(sig, threshold=0.05, closest=0):
     # Ifft
     sig_fft[np.abs(sample_freq) > peak_freq] = closest
     return fftpack.ifft(sig_fft)
+
+
+def process_row_fft(args):
+    i, row = args
+    row_rmse = np.zeros(row.shape[0])
+    row_pearson = np.zeros(row.shape[0])
+    for j in range(row.shape[0]):
+        tt = np.abs(filterFFt1d((np.array(row[j, :])), threshold=0.05))
+        aux = np.pad(tt, (0, row.shape[1] - len(tt)), 'constant').astype(np.int16)
+        row_rmse[j] = np.sqrt(np.sum(np.power(row[j, :] - aux, 2)) / row.shape[1])
+        row_pearson[j] = st.pearsonr(row[j, :], aux)[0]
+        row[j, :] = aux
+    return i, row, row_rmse, row_pearson
+
+
+def getFilter(array:np.array, path:str, raster):
+    """Generates a filtered array
+
+    Args:
+        array (np.array): Matrix to be filtered
+        path (str): Path to output file
+        raster (gdalDataSet): Raster object
+    """
+    global progress, out_file, saving, start, rt, out_array
+    progress = 0
+    saving = False
+    
+    name, ext = os.path.splitext(path)
+    
+    # Process
+    start = True
+    height, width, depth = array.shape
+    rmse = np.zeros((height, width))##
+    pearson = np.zeros((height, width))##
+    
+    start = True
+    rows = [(i, array[i, :, :]) for i in range(height)]
+    progress = 0
+    with ProcessPoolExecutor(max_workers=os.cpu_count()//2) as executor:
+        for i, row, row_rmse, row_pearson in tqdm(executor.map(process_row_fft, rows), total=height, desc="Filtering with FFT"):
+            array[i, :, :] = row.astype(np.int16)
+            rmse[i, :] = row_rmse
+            pearson[i, :] = row_pearson
+            progress = int((i + 1) / height * 100)
+    progress = 100
+            
+    # Save
+    saving = True
+    dst = f'{name}_FFT_{ext}'
+    out_file = dst
+    out_array = array
+    print("Saving in ", dst)
+    saveBand(dst, rt, array)
+    dst = f'{name}_fftrmse_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, rmse)##
+    dst = f'{name}_fftpearson_{ext}'
+    print("Saving in ", dst)
+    saveSingleBand(dst, rt, pearson)##
+    saving = False
+    rt = raster
+
 
 # Main
 def getFiltRaster(path):
@@ -139,89 +119,9 @@ def getFiltRaster(path):
         print(msg)
         sys.exit(1)
 
-    # Auxiliar
-    aux = np.zeros(img.shape).astype(np.int16)
 
-    # Dims
-    height, width, depth = img.shape
-    rmse = np.zeros((height, width))##
-    pearson = np.zeros((height, width))##
+    getFilter(img, path, rt)
 
-    # Init pandas
-    df = pd.DataFrame(columns=['NDVI'])
-
-    # Run by depth
-    start = True
-    for i, j in itertools.product(range(height), range(width)):
-            #aux[i, j, :] = np.abs(filterFFt1d(img[i, j, :], threshold=0.05)
-            tt = np.abs(filterFFt1d((np.array(img[i, j, :])), threshold=0.05)).astype(np.int16)
-            #tt = np.abs(filterFFt1d(max_filter1d_valid(np.array(img[i, j, :]), 3), threshold=0.05))
-            aux[i, j, :] = np.pad(tt, (0, depth - len(tt)), 'constant').astype(np.int16)
-            rmse[i, j] = np.sqrt(np.sum(np.power(img[i, j, :] - aux[i, j, :], 2))/depth)##
-            pearson[i, j] = st.pearsonr(img[i, j, :], aux[i, j, :])[0]##  
-            progress = int((i*width + j)/(height*width) * 100)   
-    progress = 100
-            
-    # Save
-    saving = True
-    dst = f'{name}_FFT_{ext}'
-    out_file = dst
-    print("Saving in ", dst)
-    saveBand(dst, rt, aux)
-    dst = f'{name}_fftrmse_{ext}'
-    print("Saving in ", dst)
-    saveSingleBand(dst, rt, rmse)##
-    dst = f'{name}_fftpearson_{ext}'
-    print("Saving in ", dst)
-    saveSingleBand(dst, rt, pearson)##
-    saving = False
-    return aux
-
-def getFilter(array:np.array, path:str, raster):
-    """Generates a filtered array
-
-    Args:
-        array (np.array): Matrix to be filtered
-        path (str): Path to output file
-        raster (gdalDataSet): Raster object
-    """
-    global progress, out_file, saving, start, rt, out_array
-    progress = 0
-    saving = False
-    
-    name, ext = os.path.splitext(path)
-    
-    # Process
-    start = True
-    height, width, depth = array.shapeheight, width, depth = array.shape
-    aux = np.zeros(array.shape)
-    rmse = np.zeros((height, width))##
-    pearson = np.zeros((height, width))##
-    
-    start = True
-    for i, j in itertools.product(range(height), range(width)):
-            tt = np.abs(filterFFt1d((np.array(array[i, j, :])), threshold=0.05))
-            aux[i, j, :] = np.pad(tt, (0, depth - len(tt)), 'constant')
-            rmse[i, j] = np.sqrt(np.sum(np.power(array[i, j, :] - aux[i, j, :], 2))/depth)##
-            pearson[i, j] = st.pearsonr(array[i, j, :], aux[i, j, :])[0]##  
-            progress = int((i*width + j)/(height*width) * 100)   
-    progress = 100
-            
-    # Save
-    saving = True
-    dst = f'{name}_FFT_{ext}'
-    out_file = dst
-    out_array = aux
-    print("Saving in ", dst)
-    saveBand(dst, rt, aux)
-    dst = f'{name}_fftrmse_{ext}'
-    print("Saving in ", dst)
-    saveSingleBand(dst, rt, rmse)##
-    dst = f'{name}_fftpearson_{ext}'
-    print("Saving in ", dst)
-    saveSingleBand(dst, rt, pearson)##
-    saving = False
-    rt = raster
 
 def main():
     if len(sys.argv) < 2:

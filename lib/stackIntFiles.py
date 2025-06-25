@@ -103,6 +103,7 @@ def __readDir(in_files: list) -> None:
         del band, src_file   # Free the variables
         gc.collect()    # Clean the memory
         progress += 1
+    progress += 1
 
 
         

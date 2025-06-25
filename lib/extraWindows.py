@@ -411,7 +411,7 @@ class DownLoadImages(ctk.CTkFrame):
     def openmap(self):
         res = messagebox.askyesno("Info", "Did you already authenticate? (The token expires after a week)")
         if not res:
-            res = subprocess.call('start /wait python3.10 authenticate.py', shell=True)
+            res = subprocess.call('start /wait C:/Users/madru/AppData/Local/Microsoft/WindowsApps/python3.10.exe authenticate.py', shell=True)
             print(res)
         self.toplevel = ctk.CTkToplevel(self.master)
         self.toplevel.title("Map")

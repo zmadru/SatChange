@@ -1,14 +1,15 @@
 import os, sys
 #import gdal, osr
 import numpy as np
-import pandas as pd
-from scipy import fftpack
-from scipy.ndimage.filters import maximum_filter1d
 from scipy import interpolate
-from scipy.interpolate import interp1d
 from osgeo import gdal
 from osgeo import osr
-from tqdm.contrib import itertools
+from tqdm import tqdm
+from lib.load_save_raster import loadRasterImage, saveBand
+from concurrent.futures import ProcessPoolExecutor
+import gc
+import warnings
+
 
 # Global variables
 progress:int = 0
@@ -17,61 +18,6 @@ saving:bool = False
 array:np.ndarray = None
 rt = None
 
-# Load and save raster files
-def loadRasterImage(path):
-    """ 
-    Load a raster image from disk to memory
-    Args:
-        path (str): Path to file
-
-    Returns:
-        (Dataset GDAL object): Object that contains the structure of the raster file
-        (array): Image in array format
-        (boolean): Indicates that if there is an error
-        (str): Indicates the associated error message
-    """
-    global rt
-    raster_ds = gdal.Open(path, gdal.GA_ReadOnly)
-    if raster_ds is None:
-        return None, None, True, "The file cannot be opened."
-    print("Driver: ", raster_ds.GetDriver().ShortName, '/', raster_ds.GetDriver().LongName)
-    print("Size: ({}, {}, {})".format(raster_ds.RasterXSize, raster_ds.RasterYSize, raster_ds.RasterCount))
-    rt = raster_ds
-    if raster_ds.RasterCount == 1:
-        return raster_ds, raster_ds.GetRasterBand(1).ReadAsArray(), False, ""
-    else:
-        return raster_ds, np.stack([raster_ds.GetRasterBand(i).ReadAsArray() for i in range(1, raster_ds.RasterCount+1)], axis=2).astype(np.int16), False, ""
-    
-    
-def saveBand(dst, rt, img, tt=gdal.GDT_Int16, typ='GTiff', nodata=-999):
-    """
-    Save a raster image from memory to disk
-
-    Args:
-        dst (str): Path to output file
-        rt  (Dataset GDAL object): Object that contains the structure of the raster file
-        img (array): Image in array format
-        tt  (GDAL type, optional): Defaults to gdal.GDT_Float32. Type in which the array is to be saved.
-        typ (str, optional): Defaults to 'GTiff'. Driver used to save.
-    """
-    global saving
-    saving = True
-    xsize, ysize, zsize = rt.RasterXSize, rt.RasterYSize, rt.RasterCount
-    transform = rt.GetGeoTransform()
-    geotiff = rt.GetDriver()
-    output = geotiff.Create(dst, xsize, ysize, zsize, tt)
-    wkt = rt.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt)
-    
-    for i in range(1, zsize+1):
-        output.GetRasterBand(i).WriteArray(img[:, :, i-1])
-        output.GetRasterBand(i).SetNoDataValue(nodata)
-    
-    output.SetGeoTransform(transform)
-    output.SetProjection(srs.ExportToWkt())
-    output = None
-    saving = False
 
 def fill(A, value, method):
     '''
@@ -90,6 +36,11 @@ def fill(A, value, method):
         A = np.where(A != value, A, f(inds)).astype(np.int16)           
     return A
 
+def process_row_interp(args):
+    i, row, modeInterp = args
+    for j in range(row.shape[0]):
+        row[j, :] = fill(row[j, :], 0, modeInterp)
+    return i, row
 
 # Main
 def getFiltRaster(path:str, modeInterp:str='linear'):
@@ -114,31 +65,25 @@ def getFiltRaster(path:str, modeInterp:str='linear'):
     # Dims
     height, width, depth = img.shape
     print(img.shape)
-    # Init pandas
-    df = pd.DataFrame(columns=['NDVI'])
+    # Dims
+    height, width, depth = img.shape
+    print(img.shape)
 
-    # Run by depth
-    
-    for i,  j in itertools.product(range(height), range(width)):
-        img[i, j, :] = np.array(fill(img[i, j, :], 0, modeInterp)).astype(np.int16)
-        progress = (i * width + j) / (height * width) * 100
+    rows = [(i, img[i, :, :], modeInterp) for i in range(height)]
+
+    with ProcessPoolExecutor(max_workers=os.cpu_count()//2) as executor:
+        for i, row_interp in tqdm(executor.map(process_row_interp, rows), total=height, desc="Interpolating"):
+            img[i, :, :] = row_interp
+            progress = int((i + 1) / height * 100)
     
     progress = 100
     # Save
     dst = f'{name}_filt_{modeInterp}_{ext}'
     out_file = dst
+    array = img
     print("Saving in ", dst)
-    # if saveformat == 'float32':
-    #     array = aux.astype(np.float32)
-    #     saveBand(dst, rt, aux, tt=gdal.GDT_Float32)
-    # else:
-    #     aux = aux * 10000
-    #     array = aux.astype(np.int16)
     saveBand(dst, rt, img, tt=gdal.GDT_Int16)
         
-    
-    
-
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

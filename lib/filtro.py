@@ -22,7 +22,7 @@ def getFiltRaster(path:str, option:str):
     
     filtro = option
     if filtro == "SGV":
-        SGV1.getFiltRaster(path, 3, 2)
+        SGV1.getFiltRaster(path, 5, 2)
         out_file = SGV1.out_file
         out_array = SGV1.out_array
         rt = SGV1.rt
@@ -56,7 +56,7 @@ def getFilter(array:np.ndarray, option:str, path:str, raster):
     filtro = option
     
     if filtro == "SGV":
-        SGV1.getFilter(array, 3, 2, path, raster)
+        SGV1.getFilter(array, 7, 2, path, raster)
         out_file = SGV1.out_file
         out_array = SGV1.out_array
         rt = SGV1.rt

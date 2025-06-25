@@ -448,10 +448,10 @@ class StackWindow(ctk.CTkFrame):
             while stackInt.progress/stackInt.total*100 < 100:
                 self.pbLabel.configure(text=str(stackInt.progress)+"/"+str(stackInt.total)+" files processed")
                 self.update()
-                if not thd.is_alive() and stackInt.progress < 100:
-                    self.error()
-                    self.cancel()
-                    break
+                # if not thd.is_alive() and stackInt.progress < 100:
+                #     self.error()
+                #     self.cancel()
+                #     break
 
             self.pbLabel.configure(text=str("Saving..."))
             self.pbLabel.update()
@@ -1233,7 +1233,6 @@ class ChangedetectorWin(ctk.CTkFrame):
         Back to the index window
         """
         self.master.index()
-
 
 class NewProcessWin(ctk.CTkFrame):
     """
