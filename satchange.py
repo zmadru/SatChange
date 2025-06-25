@@ -1505,7 +1505,7 @@ class NewProcessWin(ctk.CTkFrame):
             # 5 - Calculate the autocorrelation
             self.autocorrelation()
             # 6 - Calculate the change
-            self.changeDetection()
+            # self.changeDetection()
         elif self.procesedSwitch.get() == True:
             # 1 - Calculate the stack
             self.stack()
@@ -1516,7 +1516,7 @@ class NewProcessWin(ctk.CTkFrame):
             # 4 - Calculate the autocorrelation
             self.autocorrelation()
             # 5 - Calculate the change
-            self.changeDetection()
+            # self.changeDetection()
         elif self.stackSwitch.get() == True:
             # 1 - Interpolate the stack
             self.interpolate()
@@ -1525,7 +1525,7 @@ class NewProcessWin(ctk.CTkFrame):
             # 3 - Calculate the autocorrelation
             self.autocorrelation()
             # 4 - Calculate the change
-            self.changeDetection()
+            # self.changeDetection()
         
         
 
@@ -1691,6 +1691,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.infolabel.configure(state="normal")
         self.infolabel.insert("end", "\nAutocorrelation calculated")
         self.infolabel.configure(state="disabled")
+        showinfo("Done", f"Process finished, check the output folder,{ACF.out_file} has been created")
 
     def changeDetection(self):
         self.processlabel.configure(state="normal")
