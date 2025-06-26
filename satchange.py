@@ -1611,68 +1611,16 @@ class NewProcessWin(ctk.CTkFrame):
         self.periodogram()
         
         
-        showinfo("Done", f"Process finished, check the output folder,{ACF.out_file} and {periodogram.out_file} have been created")
-
+        self.processlabel.configure(state="normal")
+        self.processlabel.delete(0, "end")
+        self.processlabel.insert(0, "Process finished")
+        self.processlabel.configure(state="disabled")
+        self.percentagelabel.configure(text="100%")
         self.pb.stop()
         self.abortBtn.configure(text="Home")
         self.abortBtn.configure(command=self.back)
         self.abortBtn.update()
-
-    def indexes(self):
-        self.processlabel.configure(state="normal")
-        self.processlabel.delete(0, "end")
-        self.processlabel.insert(0, "Calculating indexes")
-        self.processlabel.configure(state="disabled")
-
-        thread = Thread(target=indexes.calculateIndex, args=(self.indexSelect.get(), self.infiles, self.outdir, self.indexSensor.get()))
-        thread.start()
-        while indexes.progress < 100:
-            self.percentagelabel.configure(text=str((indexes.progress/len(self.infiles))*100).split('.')[0] + "%")
-            self.update()
-            if not thread.is_alive():
-                self.error()
-                self.back()
-                break
-            
-        if thread.is_alive():
-            thread.join()
-            
-        self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nIndexes calculated")
-        self.infolabel.configure(state="disabled")
-
-
-    def stack(self, index="2.0"):
-        self.processlabel.configure(state="normal")
-        self.processlabel.delete(0, "end")
-        self.processlabel.insert(0, "Stacking")
-        self.processlabel.configure(state="disabled")
-
-        name = self.stackEntry.get()
-        thread = Thread(target=stackInt.stack, args=(self.infiles, self.outdir, name, 'ENVI'))
-        thread.start()
-        while stackInt.start == False:
-            self.update()
-            
-        while stackInt.progress/len(self.infiles)*100 < 100:
-            self.percentagelabel.configure(text=str((stackInt.progress/len(self.infiles))*100).split('.')[0] + "%")
-            self.update()
-            if not thread.is_alive() and stackInt.progress/len(self.infiles)*100 < 100:
-                self.error()
-                self.back()
-                break
-            
-        self.percentagelabel.configure(text="Saving...")
-        self.percentagelabel.update()
-        while stackInt.saving == True:
-            self.update()
-            
-        if thread.is_alive():
-            thread.join()
-
-        self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nStack calculated")
-        self.infolabel.configure(state="disabled")
+        showinfo("Done", f"Process finished, check the output folder,{ACF.out_file} and {periodogram.out_file} have been created")
 
 
     def interpolate(self, index="3.0"):
@@ -1735,7 +1683,7 @@ class NewProcessWin(ctk.CTkFrame):
            thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", f"\nStack filtered with {self.modeSelect.get()} mode")
+        self.infolabel.insert("end", f"\nStack filtered with {self.modeSelect.get()} algorithm")
         self.infolabel.configure(state="disabled")
 
     def autocorrelation(self, index="5.0"):
