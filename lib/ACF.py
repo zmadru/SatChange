@@ -54,6 +54,7 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
 
     # Read raster
     name, ext = os.path.splitext(path)
+    out_file = f'{name}_ACF_L{nlags}{ext}'
 
     # Process
     height, width, depth = array.shape
@@ -74,7 +75,6 @@ def ac(array:np.ndarray, path:str, raster, nlags_:int=364):
     # Save
     saving = True
     rt = raster
-    out_file = f'{name}_ACF_L{nlags}{ext}'
     print("Saving in ", out_file)
     saveBand(out_file, raster, aux)
     saving = False

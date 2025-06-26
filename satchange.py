@@ -12,6 +12,7 @@ import lib.filtro as filtro
 import lib.indexes as indexes
 import lib.ACF as ACF
 import lib.changeDetector as changeDetector
+import lib.Periodogram as periodogram
 from lib.extraWindows import *
 from threading import Thread
 from multiprocessing import Process, Queue
@@ -60,6 +61,7 @@ class App(ctk.CTk):
         self.cutrasterwin = CutRaster(self)
         self.downloadwin = DownLoadImages(self)
         self.zeroswin = ZerosViability(self)
+        self.periodwin = PeriodWindow(self)
         # when the window end delete the error log file
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -82,12 +84,12 @@ class App(ctk.CTk):
 
         # File menu
         self.menu.add_cascade(label="Time series procedures", menu=self.file_menu)
-        self.file_menu.add_command(label="Indexes", command=self.indexes)
-        self.file_menu.add_command(label="Stack", command=self.viewStack)
+        # self.file_menu.add_command(label="Indexes", command=self.indexes)
+        # self.file_menu.add_command(label="Stack", command=self.viewStack)
         self.file_menu.add_command(label="Interpolation", command=self.interpolation)
         self.file_menu.add_command(label="Filter", command=self.filter)
         self.file_menu.add_command(label="Autocorrelation", command=self.autocorrelation)
-        self.file_menu.add_command(label="Change detection", command=self.changedetector)
+        self.file_menu.add_command(label="Periodogram", command=self.periodogram)
         
         # Adicional manu for new processes 
         self.newoptions = tk.Menu(self.menu)
@@ -98,7 +100,7 @@ class App(ctk.CTk):
         self.newoptions.add_command(label="Zeros Viability", command=self.zeros)
         
         # Add Download menu
-        self.menu.add_command(label="Download Images", command=self.download)
+        # self.menu.add_command(label="Download Images", command=self.download)
 
         # add help entry
         self.help_menu = tk.Menu(self.menu)
@@ -157,6 +159,7 @@ class App(ctk.CTk):
         self.cutrasterwin.pack_forget()
         self.downloadwin.pack_forget()
         self.zeroswin.pack_forget()
+        self.periodwin.pack_forget()
 
     def index(self):
         """
@@ -174,8 +177,7 @@ class App(ctk.CTk):
         """
         self.unpackAll()
         self.stackwin.pack(expand=True, fill="both", padx=10, pady=10)
-        
-        
+      
     
     def interpolation(self, solo = True):
         """
@@ -258,7 +260,13 @@ class App(ctk.CTk):
         self.unpackAll()
         self.zeroswin.pack(expand=True, fill="both", padx=10, pady=10)
         
-    
+    def periodogram(self):
+        """
+        Show the periodogram window
+        """
+        self.unpackAll()
+        self.periodwin.pack(expand=True, fill="both", padx=10, pady=10)
+        
 class IndexWindow(ctk.CTkFrame):
     """
     Index window class
@@ -311,20 +319,19 @@ class IndexWindow(ctk.CTkFrame):
         self.button2.grid(row=5, column=3, pady=10, padx=10)
 
         # Individual process
-        self.button3 = ctk.CTkButton(self, text="Stack", command=self.master.viewStack)
-        self.button3.grid(row=3, column=0)
+        # self.button3 = ctk.CTkButton(self, text="Stack", command=self.master.viewStack)
+        # self.button3.grid(row=3, column=0)
         self.button4 = ctk.CTkButton(self, text="Interpolation", command=self.master.interpolation)
-        self.button4.grid(row=4, column=0)
-        self.button5 = ctk.CTkButton(self, text="Autocorrelation", command=self.master.autocorrelation)
-        self.button5.grid(row=5, column=0)
-        self.button6 = ctk.CTkButton(self, text="Change detection", command=self.master.changedetector)
-        self.button6.grid(row=5, column=1)
+        self.button4.grid(row=3, column=0)
         self.button7 = ctk.CTkButton(self, text="Filter", command=self.master.filter)
-        self.button7.grid(row=3, column=1)
-        self.button8 = ctk.CTkButton(self, text="Indexes", command=self.master.indexes)
-        self.button8.grid(row=4, column=1)
-    
-  
+        self.button7.grid(row=4, column=0)
+        self.button5 = ctk.CTkButton(self, text="Autocorrelation", command=self.master.autocorrelation)
+        self.button5.grid(row=3, column=1)
+        self.button6 = ctk.CTkButton(self, text="Periodogram", command=self.master.periodogram)
+        self.button6.grid(row=4, column=1)
+        # self.button8 = ctk.CTkButton(self, text="Indexes", command=self.master.indexes)
+        # self.button8.grid(row=4, column=1)
+   
 class StackWindow(ctk.CTkFrame):
     """
     The stack window
@@ -1099,6 +1106,106 @@ class AcWindow(ctk.CTkFrame):
         """
         self.master.index()
 
+class PeriodWindow(ctk.CTkFrame):
+    def __init__(self, master, solo=True):
+        """
+        Constructor
+        """
+        super().__init__(master)
+        self.master = master
+        self.grid_rowconfigure((0,5), weight=5)
+        self.grid_columnconfigure((0,3), weight=2)
+        self.solo = solo
+        self.file = ""
+        self.create_widgets()
+        
+    def create_widgets(self):
+        """
+        Create the widgets of the window
+        """
+        self.create_label()
+        self.create_buttons()
+
+    def create_label(self):
+        """
+        Create the label of the window
+        """
+        self.label = ctk.CTkLabel(self, text="Periodogram", font=("Helvetica", 36, "bold"))
+        self.label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.fileLabel = ctk.CTkTextbox(self, width=45, height=22)
+        self.fileLabel.insert("0.0", "No input file selected")
+        self.fileLabel.configure(state="disabled")
+        self.fileLabel.grid(row=1, column=1, columnspan=2, sticky="we",padx=10, pady=10)
+
+    def create_buttons(self):
+        """
+        Create the buttons of the window
+        """
+        self.selectBtn = ctk.CTkButton(self, text="Select file", command=self.select)
+        self.selectBtn.grid(row=1, column=0, padx=0, pady=5)
+        self.startBtn = ctk.CTkButton(self, text="Calculate", command=self.run)
+        self.startBtn.grid(row=4, column=1, padx=10, pady=10)
+        self.backBtn = ctk.CTkButton(self, text="Back", command=self.back)
+        self.backBtn.grid(row=4, column=2, padx=10, pady=10)
+        self.pb = ctk.CTkProgressBar(self, mode='determinate')
+        self.pb.set(0)
+        self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+
+    def select(self):
+        """
+        Select the file to calculate the period
+        """
+        self.file = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the file to process", filetypes=(("Tiff files", "*.tif"), ("All files", "*.*")))
+        self.fileLabel.configure(state="normal")
+        self.fileLabel.delete("0.0", "end")
+        if self.file != "":
+            self.fileLabel.insert("0.0",self.file)
+        else:
+            self.fileLabel.insert("0.0","No input file selected")
+        self.fileLabel.configure(state="disabled")
+        
+    def run(self):
+        """
+        Run the period detection
+        """
+        if self.file == "":
+            showerror("Error", "No input file selected")
+        else:
+            self.thd = Thread(target=periodogram.periodtif, args=(self.file,))
+            self.thd.start()
+            self.pb = ctk.CTkProgressBar(self, mode='indeterminate')
+            self.percentajeLabel = ctk.CTkLabel(self, text="Loading...")
+            self.startBtn.configure(state="disabled")
+            self.backBtn.configure(state="disabled")
+            self.pb.grid(row=5, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+            self.percentajeLabel.grid(row=5, column=0, padx=5, pady=5)
+            self.pb.start()
+            while not periodogram.start:
+                self.update()
+                self.master.update()
+            while periodogram.progress < 100:
+                self.percentajeLabel.configure(text=f"{periodogram.progress}%")
+                self.pb.set(periodogram.progress/100)
+                self.percentajeLabel.update()
+                self.update()
+
+            self.percentajeLabel.configure(text="Saving...")
+            self.percentajeLabel.update()
+            while periodogram.saving:
+                self.update()
+                self.master.update()
+            self.startBtn.configure(state="normal")
+            self.backBtn.configure(state="normal")
+            self.pb.stop()
+            self.percentajeLabel.destroy()
+            showinfo("Satchange", f"File saved in {periodogram.out_file}")
+            
+    def back(self):
+        """
+        Back to the index window
+        """
+        self.master.index()
+
 class ChangedetectorWin(ctk.CTkFrame):
     """Class which contains the change detector given a autocorrelation file
     """
@@ -1274,6 +1381,9 @@ class NewProcessWin(ctk.CTkFrame):
         self.configFrame.grid_columnconfigure((0,1,2,3), weight=1)
         self.create_configwidgets()
         
+        # make focus in the toplevel window with the window manager
+        self.toplevel.focus_force()
+        
     def create_inputwidgets(self):
         """
         Create the widgets of the input frame
@@ -1281,20 +1391,26 @@ class NewProcessWin(ctk.CTkFrame):
         self.inputLabel = ctk.CTkLabel(self.inputFrame, text="Input images", font=("Helvetica",16,"bold"))
         self.inputLabel.grid(row=0, column=0)
 
-        self.infilesButton = ctk.CTkButton(self.inputFrame, text="Select input files", state="disabled", command=self.selectFiles)
+        self.infilesButton = ctk.CTkButton(self.inputFrame, text="Select input stack", command=self.selectFiles)
         self.infilesButton.grid(row=1, column=0, padx=5, pady=5)
-        self.outdirButton = ctk.CTkButton(self.inputFrame, text="Select output directory", command=self.selectDir)
-        self.outdirButton.grid(row=2, column=0, padx=5, pady=5)
-        self.rawSwitch = ctk.CTkSwitch(self.inputFrame, text="Raw images", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.rawSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
-        self.procesedSwitch = ctk.CTkSwitch(self.inputFrame, text="Processed images", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.procesedSwitch.grid(row=4, column=0, padx=15, pady=5, sticky="w")
-        self.stackSwitch = ctk.CTkSwitch(self.inputFrame, text="Stack image", command=self.switch_behaviour, onvalue=True, offvalue=False)
-        self.stackSwitch.grid(row=5, column=0, padx=15, pady=5, sticky="w")
+        # self.outdirButton = ctk.CTkButton(self.inputFrame, text="Select output directory", command=self.selectDir)
+        # self.outdirButton.grid(row=2, column=0, padx=5, pady=5)
+        # self.rawSwitch = ctk.CTkSwitch(self.inputFrame, text="Raw images", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        # self.rawSwitch.grid(row=3, column=0, padx=15, pady=5, sticky="w")
+        # self.procesedSwitch = ctk.CTkSwitch(self.inputFrame, text="Processed images", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        # self.procesedSwitch.grid(row=4, column=0, padx=15, pady=5, sticky="w")
+        # self.stackSwitch = ctk.CTkSwitch(self.inputFrame, text="Stack image", command=self.switch_behaviour, onvalue=True, offvalue=False)
+        # self.stackSwitch.grid(row=5, column=0, padx=15, pady=5, sticky="w")
+        
+        # self.outdirLabel = ctk.CTkEntry(self.inputFrame, placeholder_text="Output directory")
+        # self.outdirLabel.insert(0, "No output directory selected")
+        # self.outdirLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
+        # self.outdirLabel.configure(state="disabled")
         self.nfilesLabel = ctk.CTkEntry(self.inputFrame)
         self.nfilesLabel.insert(0, "0 files selected")
         self.nfilesLabel.configure(state="disabled")
-        self.nfilesLabel.grid(row=6, column=0, padx=5, pady=5, sticky="ew")
+        self.nfilesLabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew")
+        
 
         
     def create_configwidgets(self):
@@ -1303,48 +1419,48 @@ class NewProcessWin(ctk.CTkFrame):
         """
         self.configLabel = ctk.CTkLabel(self.configFrame, text="Configuration", font=("Helvetica",16,"bold"))
         self.configLabel.grid(row=0, column=0)
-        self.nextbutton = ctk.CTkButton(self.configFrame, text="Next", command=self.checkparams, state="disabled")
+        self.nextbutton = ctk.CTkButton(self.configFrame, text="Next", command=self.checkparams)
         self.nextbutton.grid(row=7, column=3, padx=5, pady=5)
         self.backbutton = ctk.CTkButton(self.configFrame, text="Cancel", command=self.cancel)
         self.backbutton.grid(row=7, column=0, padx=5, pady=5)
 
         # select the index and the sensor 
-        self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
-        self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=indexes.indexes)
-        self.indexSelect.configure(state="disabled")
-        self.indexSelect.grid(row=1, column=2, padx=5, pady=5)
-        self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=indexes.sensors)
-        self.indexSensor.configure(state="disabled")
-        self.indexSensor.grid(row=1, column=3, padx=5, pady=5)
+        # self.indexLabel = ctk.CTkLabel(self.configFrame, text="Index configuration")
+        # self.indexLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        # self.indexSelect = ctk.CTkOptionMenu(self.configFrame, values=indexes.indexes)
+        # self.indexSelect.configure(state="disabled")
+        # self.indexSelect.grid(row=1, column=2, padx=5, pady=5)
+        # self.indexSensor = ctk.CTkOptionMenu(self.configFrame, values=indexes.sensors)
+        # self.indexSensor.configure(state="disabled")
+        # self.indexSensor.grid(row=1, column=3, padx=5, pady=5)
 
         # stack configuration
-        self.stackLabel = ctk.CTkLabel(self.configFrame, text="Stack configuration")
-        self.stackLabel.grid(row=2, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
-        self.stackEntry = ctk.CTkEntry(self.configFrame, state="disabled")
-        self.stackEntry.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
-        self.stackLabel2 = ctk.CTkLabel(self.configFrame, text=".tif")
-        self.stackLabel2.grid(row=2, column=3, padx=5, pady=5, sticky="w") 
+        # self.stackLabel = ctk.CTkLabel(self.configFrame, text="Stack configuration")
+        # self.stackLabel.grid(row=2, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        # self.stackEntry = ctk.CTkEntry(self.configFrame, state="disabled")
+        # self.stackEntry.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
+        # self.stackLabel2 = ctk.CTkLabel(self.configFrame, text=".tif")
+        # self.stackLabel2.grid(row=2, column=3, padx=5, pady=5, sticky="w") 
 
         # interpolation configuration
         self.interpLabel = ctk.CTkLabel(self.configFrame, text="Interpolation configuration")
-        self.interpLabel.grid(row=3, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.interpLabel.grid(row=1, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.modeInter = ctk.CTkOptionMenu(self.configFrame, values=["linear", 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous'])
-        self.modeInter.grid(row=3, column=2, padx=5, pady=5)
+        self.modeInter.grid(row=1, column=2, padx=5, pady=5)
         self.formatSelect = ctk.CTkOptionMenu(self.configFrame, values=["int16","float32"])
-        self.formatSelect.grid(row=3, column=3, padx=5, pady=5)
+        self.formatSelect.grid(row=1, column=3, padx=5, pady=5)
 
         # filter configuration
         self.filterLabel = ctk.CTkLabel(self.configFrame, text="Filter configuration")
-        self.filterLabel.grid(row=4, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.filterLabel.grid(row=2, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.modeSelect = ctk.CTkOptionMenu(self.configFrame, values=["SGV", "MAX", "FFT", "WHIT"], state="readonly")
-        self.modeSelect.grid(row=4, column=2, padx=5, pady=5)
+        self.modeSelect.grid(row=2, column=2, padx=5, pady=5)
 
         # autocorrelation configuration
         self.autolabel = ctk.CTkLabel(self.configFrame, text="Autocorrelation configuration")
-        self.autolabel.grid(row=5, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
+        self.autolabel.grid(row=3, column=0, padx=5, pady=5, sticky="ew", columnspan=2)
         self.autoEntry = ctk.CTkEntry(self.configFrame, placeholder_text="Number of lags")
-        self.autoEntry.grid(row=5, column=2, padx=5, pady=5, sticky="ew")
+        self.autoEntry.grid(row=3, column=2, padx=5, pady=5, sticky="ew")
 
 
 
@@ -1352,19 +1468,17 @@ class NewProcessWin(ctk.CTkFrame):
         """
         Check the parameters of the configuration before starting the process
         """
-        if (self.rawSwitch.get() or self.procesedSwitch.get() or self.stackSwitch.get()) and len(self.infiles) == 0:
+        if len(self.infiles) == 0:
             showerror("Error", "No input selected")
-        elif (self.rawSwitch.get() or self.procesedSwitch.get()) and self.stackEntry.get() == "":
-            showerror("Error", "No stack name selected")
-        elif self.outdir == "":
-            showerror("Error", "No output directory selected")
+        # elif self.outdir == "":
+        #     showerror("Error", "No output directory selected")
         elif self.autoEntry.get() == "":
             showerror("Error", "No number of lags selected")
         elif self.autoEntry.get().isdecimal() == False:
-            showerror("Error", "The number of lags must be a number")
+            showerror("Error", "The number of lags must be an integer")
         else:
             # ask for confirmation before starting the process
-            if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at:\n" + self.outdir):
+            if askyesno("Confirmation", "Are you sure you want to start the process?\nAll the files will be saved at the same directory as the input stack."):
                 self.startprocess()
         
 
@@ -1419,26 +1533,19 @@ class NewProcessWin(ctk.CTkFrame):
         Select the input files depending of the option selected
         """
         text = ""
-        if self.rawSwitch.get() == True:
-            self.infiles = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select files the multiband images", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
-            text = str(len(self.infiles)) + " multiband images selected"
-        elif self.procesedSwitch.get() == True:
-            self.infiles = filedialog.askopenfilenames(initialdir=os.path.dirname(__file__), title="Select files the index calculated images", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
-            text = str(len(self.infiles)) + " index calculated images selected"
-        elif self.stackSwitch.get() == True:
-            self.infiles = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the stack", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
-            text = "1 stack image selected"
+        self.infiles = filedialog.askopenfilename(initialdir=os.path.dirname(__file__), title="Select the stack", filetypes=(("GeoTiff", "*.tif"), ("All files", "*.*")))
+        text = self.infiles
 
         self.nfilesLabel.configure(state="normal")
         self.nfilesLabel.delete(0, "end")
         self.nfilesLabel.insert(0, text)
         self.nfilesLabel.configure(state="disabled")
 
-    def selectDir(self):
-        """
-        Select the output directory
-        """
-        self.outdir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
+    # def selectDir(self):
+    #     """
+    #     Select the output directory
+    #     """
+    #     self.outdir = filedialog.askdirectory(initialdir=os.path.dirname(__file__), title="Select the output directory")
         
     def create_widgets(self):
         """
@@ -1493,48 +1600,23 @@ class NewProcessWin(ctk.CTkFrame):
         self.percentagelabel.grid(row=3, column=0, padx=10, pady=10)
         
         self.pb.start()
-        if self.rawSwitch.get() == True:
-            # 1 - Calculate indexes
-            self.indexes()
-            # 2 - Calculate the stack
-            self.stack()
-            # 3 - Interpolate the stack
-            self.interpolate()
-            # 4 - Filter the stack interpolated
-            self.filter()
-            # 5 - Calculate the autocorrelation
-            self.autocorrelation()
-            # 6 - Calculate the change
-            # self.changeDetection()
-        elif self.procesedSwitch.get() == True:
-            # 1 - Calculate the stack
-            self.stack()
-            # 2 - Interpolate the stack
-            self.interpolate()
-            # 3 - Filter the stack interpolated
-            self.filter()
-            # 4 - Calculate the autocorrelation
-            self.autocorrelation()
-            # 5 - Calculate the change
-            # self.changeDetection()
-        elif self.stackSwitch.get() == True:
-            # 1 - Interpolate the stack
-            self.interpolate()
-            # 2 - Filter the stack interpolated
-            self.filter()
-            # 3 - Calculate the autocorrelation
-            self.autocorrelation()
-            # 4 - Calculate the change
-            # self.changeDetection()
+
+        # 1 - Interpolate the stack
+        self.interpolate()
+        # 2 - Filter the stack interpolated
+        self.filter()
+        # 3 - Calculate the autocorrelation
+        self.autocorrelation()
+        # 4 - Calculate the periodogram
+        self.periodogram()
         
         
+        showinfo("Done", f"Process finished, check the output folder,{ACF.out_file} and {periodogram.out_file} have been created")
 
         self.pb.stop()
         self.abortBtn.configure(text="Home")
         self.abortBtn.configure(command=self.back)
         self.abortBtn.update()
-
-            
 
     def indexes(self):
         self.processlabel.configure(state="normal")
@@ -1599,10 +1681,7 @@ class NewProcessWin(ctk.CTkFrame):
         self.processlabel.insert(0, "Interpolating")
         self.processlabel.configure(state="disabled")
 
-        if self.stackSwitch.get() == True:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get()))
-        else:
-            thread = Thread(target=interpolacion.getFiltRaster, args=(stackInt.out_file, self.modeInter.get()))
+        thread = Thread(target=interpolacion.getFiltRaster, args=(self.infiles, self.modeInter.get()))
         thread.start()
 
         while interpolacion.progress < 100:
@@ -1622,7 +1701,7 @@ class NewProcessWin(ctk.CTkFrame):
             thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nStack interpolated")
+        self.infolabel.insert("end", f"\nStack interpolated to {self.modeInter.get()} mode")
         self.infolabel.configure(state="disabled")
     
     def filter(self, index="4.0"):
@@ -1656,9 +1735,8 @@ class NewProcessWin(ctk.CTkFrame):
            thread.join()
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nStack filtered")
+        self.infolabel.insert("end", f"\nStack filtered with {self.modeSelect.get()} mode")
         self.infolabel.configure(state="disabled")
-
 
     def autocorrelation(self, index="5.0"):
         self.processlabel.configure(state="normal")
@@ -1689,42 +1767,46 @@ class NewProcessWin(ctk.CTkFrame):
             #     break        
             
         self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nAutocorrelation calculated")
+        self.infolabel.insert("end", f"\nAutocorrelation calculated with {lags} lags")
         self.infolabel.configure(state="disabled")
-        showinfo("Done", f"Process finished, check the output folder,{ACF.out_file} has been created")
 
-    def changeDetection(self):
+    def periodogram(self, index="6.0"):
+        """
+        Calculate the periodogram of the filter file
+        """
         self.processlabel.configure(state="normal")
         self.processlabel.delete(0, "end")
-        self.processlabel.insert(0, "Calculating change detection")
+        self.processlabel.insert(0, "Calculating periodogram")
         self.processlabel.configure(state="disabled")
-
-        thread = Thread(target=changeDetector.changeDetector, args=(ACF.out_array, ACF.out_file, ACF.rt))
+        
+        thread = Thread(target=periodogram.period, args=(filtro.out_array, filtro.out_file, filtro.rt))
         thread.start()
 
-        while not changeDetector.start:
+        while not periodogram.start:
             self.update()
             self.master.update()
-
-        self.percentagelabel.configure(text="Processing...")
-        while changeDetector.progress < 100:
-            # percentage = (changeDetector.progress/changeDetector.total)*100
-            # self.percentagelabel.configure(text=str(percentage).split(".")[0] + "%")
+        while periodogram.progress < 100:
+            self.percentagelabel.configure(text=str(periodogram.progress).split('.')[0] + "%")
             self.update()
+            # if not thread.is_alive():
+            #     self.error()
+            #     self.back()
+            #     break
             
         self.percentagelabel.configure(text="Saving...")
         self.percentagelabel.update()
-        while changeDetector.saving:
+        while periodogram.saving == True:
             self.update()
-            self.master.update() 
-        #     if not thread.is_alive():
-        #         break          
-            
-        self.infolabel.configure(state="normal")
-        self.infolabel.insert("end", "\nChange detection calculated")
-        self.infolabel.configure(state="disabled")
-        showinfo("Done", f"Process finished, check the output folder,{changeDetector.out_file} has been created")
+            self.master.update()
+            # if not thread.is_alive():
+            #     break
 
+        if thread.is_alive():
+            thread.join()
+        self.infolabel.configure(state="normal")
+        self.infolabel.insert("end", "\nPeriodogram calculated")
+        self.infolabel.configure(state="disabled")
+        
     def error(self):
         showerror("Error", "An error has occurred. Please check the error log file")
         self.master.log()
