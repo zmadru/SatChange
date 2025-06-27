@@ -1787,7 +1787,7 @@ class NewProcessWin(ctk.CTkFrame):
         
 if __name__ == "__main__":
     # redirect stderr to a file
-    # sys.stderr = error
+    sys.stderr = error
     # Initialize the main window
     app = App()
     app.mainloop()
