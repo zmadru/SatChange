@@ -319,7 +319,7 @@ class ZerosViability(ctk.CTkFrame):
         self.createWidgets()
         
     def createWidgets(self):
-        self.label = ctk.CTkLabel(self, text="Zeros viability", font=("Helvetica", 36, "bold"))
+        self.label = ctk.CTkLabel(self, text="IEI", font=("Helvetica", 36, "bold"))
         self.label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
         
         self.selectBtn = ctk.CTkButton(self, text="Select raster", command=self.selectraster)

@@ -90,6 +90,7 @@ class App(ctk.CTk):
         self.file_menu.add_command(label="Filter", command=self.filter)
         self.file_menu.add_command(label="Autocorrelation", command=self.autocorrelation)
         self.file_menu.add_command(label="Periodogram", command=self.periodogram)
+        self.file_menu.add_command(label="IEI", command=self.zeros)
         
         # Adicional manu for new processes 
         self.newoptions = tk.Menu(self.menu)
@@ -97,7 +98,6 @@ class App(ctk.CTk):
         self.newoptions.add_command(label="Fishnet", command=self.fishnet)
         self.newoptions.add_command(label="Cut time series",command=self.cutTimeSeries)
         self.newoptions.add_command(label="Cut raster", command=self.cutRaster)
-        self.newoptions.add_command(label="Zeros Viability", command=self.zeros)
         
         # Add Download menu
         # self.menu.add_command(label="Download Images", command=self.download)
